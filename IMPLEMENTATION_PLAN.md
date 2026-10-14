@@ -5,10 +5,10 @@
 **Protected original repository:** [`jonexe2/techlo-astro-MASTER-Dupe-2`](https://github.com/jonexe2/techlo-astro-MASTER-Dupe-2) — reference only; **do not change its files, branches, settings, or deployments**.  
 **Default branch:** `main`  
 **Plan created:** October 13, 2026  
-**Assessment basis:** Working repository `main` tree at `3dac95ba0467d6e2339b98d5c7c71460e948c022` (checked October 13, 2026), selected source files including the hero trust banner and testimonial content, plus the earlier original-repository assessment and project requirements. Local build/browser behavior remains untested.  
+**Assessment basis:** Working repository `main` tree at `3dac95ba0467d6e2339b98d5c7c71460e948c022` (checked October 13, 2026), selected source files including the hero trust banner and testimonial content, plus the earlier original-repository assessment and project requirements. *(Historical, as of 2026-10-13: local build/browser behavior was untested at that time. It was tested on 2026-10-14; see Section 10.1.)*  
 **Project status:** Planning; feature implementation has not started in this plan.  
-**Current phase:** Phase 0 in `astro-MASTER-flyio`; hands-on baseline verification remains.  
-**Next recommended task:** P0.3, run the existing site locally and record its starting condition.  
+**Current phase:** Phase 0 in `astro-MASTER-flyio`; P0.1 and P0.3 are complete. P0.2 (page/form/brand inventory) and P0.4 (first decisions) remain.  
+**Next recommended task:** Finish the open P0.2 inventory items, then P0.4. **Astro security findings (Section 10.1) must be reviewed and remediated before any server-side functionality (Phase 1 onward) is enabled or anything is deployed to production.**  
 **Scope of this document:** Development roadmap and progress tracker. This revision only updates the plan, not repository code or deployments. The original repository is not to be modified.
 
 > **How to use this plan:** Work through one small task at a time. A checked box (`- [x]`) means the action was actually performed and verified. An unchecked box (`- [ ]`) means it is still pending. An existing file is not proof a feature works. After each development session, update the status table, completed checklist items, test evidence, blockers, and next task. Do not check off untested work.
@@ -53,12 +53,12 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 
 **Active target:** `jonexe2/astro-MASTER-flyio` on `main` (tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`). The current target contains the inspected source files and components listed below. The earlier detailed inspection of `techlo-astro-MASTER-Dupe-2` is historical context only, not the repository to implement against. The full histories were not compared file by file.
 
-This assessment is **source-code inspection**, not a successful local build, browser test, or production test. Recheck the working repository before any changes.
+*Historical context (2026-10-13):* this assessment is **source-code inspection**, not a successful local build, browser test, or production test. The 2026-10-14 P0.3 baseline (Section 10.1) has since run the local install, checks, build and browser review; the table below is preserved as originally written. Recheck the working repository before any changes.
 
 | Area | Confirmed in repository | What remains to prove or do |
 |---|---|---|
-| Structure | Astro pages, layouts, reusable components, and Markdown/MDX content exist. | Run and inspect the website in a browser. |
-| Dependencies | `package.json` declares `astro: ^7.0.2`, `tailwindcss: ^4.3.1`, Node `>=22.12.0`. | Install locked dependencies and verify compatible runtime locally. |
+| Structure | Astro pages, layouts, reusable components, and Markdown/MDX content exist. | Run and inspect the website in a browser. *(Done in P0.3, 2026-10-14; see Section 10.1.)* |
+| Dependencies | `package.json` declares `astro: ^7.0.2`, `tailwindcss: ^4.3.1`, Node `>=22.12.0`. | Install locked dependencies and verify compatible runtime locally. *(Done in P0.3, 2026-10-14: `npm ci` succeeded on Node v24.17.0; installed `astro@7.0.3` has open security advisories, see Section 10.1.)* |
 | Project instructions | `CLAUDE.md`, `AGENTS.md`, `SKILLS.md` exist. | Follow their rules during changes; revisit where server/dashboard code needs new conventions. |
 | Configuration | `astro.config.mjs` has sitemap, MDX, typography and Tailwind configuration; no server adapter is shown in that file. | Evaluate and add a suitable Node server adapter, then verify existing static routes. |
 | Homepage | `src/pages/[...lang]/index.astro` composes existing HVAC sections, hero form, contact section, and blog. | Check visual/mobile rendering; do not rebuild those sections. |
@@ -74,7 +74,7 @@ This assessment is **source-code inspection**, not a successful local build, bro
 | Master trust banner | `src/content/sections/english/alternative-hero-section.md` includes exactly **“5.0 Rating”**, **“200+ Reviews”**, and **“Licensed & Insured”**. | **Keep all three in the master template.** For a real client deployment, use verified values or hide only in the client copy until valid; do not remove master placeholders. |
 | Master testimonials | `src/layouts/components/sections/TestimonialQuoteSection.astro` renders testimonial content from `src/content/sections/english/testimonial.md`; homepage includes the section. Content currently includes generic sample IT-business quotes. | **Preserve the existing testimonial section, its content, and its appearance in the master.** For client-specific live websites, replace with authentic approved customer testimonials or hide just in the client copy if none are available. |
 | Older deployment configs | Root contains `netlify.toml`, `vercel.json`, `wrangler.toml`. | Determine which are historical; don't delete them before checking their purpose. |
-| Plan file | `IMPLEMENTATION_PLAN.md` was not found on the new working repository’s `main` during this revision. | Add this revised file to `astro-MASTER-flyio` only when explicitly requested; never upload it to the protected original by accident. |
+| Plan file | `IMPLEMENTATION_PLAN.md` was not found on the new working repository’s `main` during this revision. *(Historical: the plan was later added in commit `de67f59`.)* | Add this revised file to `astro-MASTER-flyio` only when explicitly requested; never upload it to the protected original by accident. |
 | New backend and hosting | The inspected tree did not show a custom SQLite lead backend, owner dashboard, planned Fly.io configuration, or Docker setup. | Treat these as unimplemented until inspected and tested. |
 
 **Important distinction:** The project has user-facing form **markup and client-side handling**. This does **not** demonstrate that a request is saved to SQLite or that a live notification works. The previous file inspection found no evidence of those features. No application commands were executed for this assessment.
@@ -93,7 +93,7 @@ This assessment is **source-code inspection**, not a successful local build, bro
 
 **Working-repository rule:** Any branch, worktree, local clone, pull request, or deployment made under this roadmap must trace back to `astro-MASTER-flyio`. The older Techlo duplicate is not a place to implement or merge these changes.
 
-**Not verified yet:** a successful local install/build, all real route URLs, exact rendered appearance, mobile layout, production domain, whether any existing form endpoint currently receives leads, production performance, storage needs, private owner identity, authentication provider, or live integrations. Phase 0 resolves what can be checked safely before code changes.
+**Not verified as of 2026-10-13 (the local install/build, route URLs and basic rendered/mobile checks were verified on 2026-10-14; see Section 10.1):** a successful local install/build, all real route URLs, exact rendered appearance, mobile layout, production domain, whether any existing form endpoint currently receives leads, production performance, storage needs, private owner identity, authentication provider, or live integrations. Phase 0 resolves what can be checked safely before code changes.
 
 ---
 
@@ -247,9 +247,9 @@ The mapping must explicitly cover:
 - [x] Read the existing project instructions and identify styling, component and verification rules.
 - [x] Inspect package dependencies, scripts, configuration and existing asset/content conventions.
 - [x] Check whether a root `IMPLEMENTATION_PLAN.md` already exists on the inspected branch; none was found.
-- [ ] Before implementation, confirm there have been no relevant later commits **in `astro-MASTER-flyio`** and review changes since tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`.
+- [x] Before implementation, confirm there have been no relevant later commits **in `astro-MASTER-flyio`** and review changes since tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`. *(Verified 2026-10-14: `git fetch` run; local `main` and `origin/main` both at `3cc073c`. Commits after `3dac95b` are only `de67f59` "Added implementation_plan.md" and `3cc073c` "Update CLAUDE.md to Connect Claude instructions to implementation plan". Both changed documentation only, so nothing relevant to the source assessment needed reconciling.)*
 
-**Verify/done when:** The current code and instructions are known; changes since this assessment have been reconciled. **Status: partly complete; source files inspected, runtime not tested.**
+**Verify/done when:** The current code and instructions are known; changes since this assessment have been reconciled. **Status: complete (2026-10-14).**
 
 #### P0.2 Map existing pages, forms and branding
 **Objective:** Know what to preserve and exactly where requests originate.  
@@ -271,15 +271,15 @@ The mapping must explicitly cover:
 **Prerequisites:** P0.1; correct local access.  
 **Files:** `package-lock.json`, `package.json`, project scripts and existing page files.
 
-- [ ] Open a local clone of **`jonexe2/astro-MASTER-flyio`** at a known commit/branch; verify the Git remote points to that repository, **not** `techlo-astro-MASTER-Dupe-2`.
-- [ ] Install dependencies using the project's lockfile and the supported Node version; record any install failures.
-- [ ] Start the existing development site and visit homepage, contact page, six service pages, blog, and a nonexisting route.
-- [ ] Check forms visually and safely inspect their current configured submission destination; do **not** submit real customer data to the template address.
-- [ ] Run existing `npm run astro-check` and `npm run build` without unrelated edits; record actual results and pre-existing errors.
-- [ ] Review desktop, tablet and mobile presentation; record screenshots or notes for regression comparisons.
-- [ ] Check local console/server errors and confirm whether existing routes are static or on-demand in the current build.
+- [x] Open a local clone of **`jonexe2/astro-MASTER-flyio`** at a known commit/branch; verify the Git remote points to that repository, **not** `techlo-astro-MASTER-Dupe-2`. *(`origin` = `https://github.com/jonexe2/astro-MASTER-flyio.git`; branch `main`; commit `3cc073c`; working tree clean.)*
+- [x] Install dependencies using the project's lockfile and the supported Node version; record any install failures. *(`npm ci` succeeded: 505 packages in ~1 min, exit 0; Node v24.17.0, npm 11.13.0; project requires Node `>=22.12.0`. No install failures. `npm ci` reported 19 vulnerabilities; see Section 10.1.)*
+- [x] Start the existing development site and visit homepage, contact page, six service pages, blog, and a nonexisting route. *(Dev server at `http://localhost:4321`. 16 real routes returned HTTP 200: `/`, `/contact-us/`, `/about-us/`, `/services/`, `/services/alternative-services/`, `/services/hero-alternatives/`, `/services/service-02/` to `service-06/`, `/services/service-custom-slug/` (the six HVAC service pages are `service-02`, `-03`, `-04`, `-05`, `-06` and `-custom-slug`), `/blog/`, `/blog/post-1/`, `/privacy-policy/`, `/terms-conditions/`. `/does-not-exist/` returned a real HTTP 404 with the custom "Page Not Found" page.)*
+- [x] Check forms visually and safely inspect their current configured submission destination; do **not** submit real customer data to the template address. *(No form was submitted or interacted with. Hero form seen rendered on desktop, tablet and mobile widths. Contact form on `/contact-us/` viewed in the dev browser on 2026-10-14 (about 1024 px wide pane) after a restart of the dev server: heading "Fill The Contact Form"; fields Your name\*, Email address\*, Estimated budget, a date field (mm/dd/yyyy), a required service dropdown ("Select a service \*"), "New project"/"Improve existing system" radios, Email/Phone checkboxes, Write your message\*, consent checkbox, "Send Message" button; all rendered without visible layout problems. Observation, not investigated: the service dropdown label displayed in red before any interaction. The dropdown options and labels are IT-themed (see Section 10.1). Both forms POST JSON via `formSubmit` in `src/lib/utils/FormHandle.ts` to `https://formsubmit.co/ajax/temp.gats@gmail.com`, from `contactFormAction`/`contactFormProvider` in `src/config/config.toml`.)*
+- [x] Run existing `npm run astro-check` and `npm run build` without unrelated edits; record actual results and pre-existing errors. *(`astro-check`: 144 files, 0 errors, 0 warnings, 0 hints. `build`: exit 0, 32 pages built in ~25 s, sitemap created, no warnings or errors in output. `git status` stayed clean afterward.)*
+- [x] Review desktop, tablet and mobile presentation; record screenshots or notes for regression comparisons. *(Notes recorded in Section 10.1; no screenshot files were saved. Horizontal-overflow check at 375, 768 and 1280 px on 12 real pages plus the 404 page (13 URLs, 39 checks): 0 overflows. Visually reviewed by screenshot: homepage at 375, 768 and about 1024 and 1440 px; testimonial section on the homepage at 768 px; contact form at about 1024 px. Other pages and widths were checked by the overflow measurement and content checks only, not visually.)*
+- [x] Check local console/server errors and confirm whether existing routes are static or on-demand in the current build. *(All routes are static: `astro.config.mjs` has no adapter or server output, and the build emitted 32 static pages. Console findings are in Section 10.1: 404s are the intentional nonexistent-URL test; 504 "Outdated Optimize Dep" errors seen once in dev only on the dev toolbar file and not reproduced after restart.)*
 
-**Verify/done when:** Baseline build/runtime results and known pre-existing defects are recorded. Do not mark complete if any required checks were skipped.
+**Verify/done when:** Baseline build/runtime results and known pre-existing defects are recorded. Do not mark complete if any required checks were skipped. **Status: complete (2026-10-14).** Known defects and open flags are in Section 10.1.
 
 #### P0.4 Agree the first implementation decisions
 **Objective:** Unblock implementation without endless planning.  
@@ -307,6 +307,7 @@ The mapping must explicitly cover:
 **Objective:** Add only the runtime necessary for server functions.  
 **Files:** `astro.config.mjs`, `package.json`, `package-lock.json`; **proposed** small test endpoint under `src/pages/api/`.
 
+- [ ] **Security gate (from P0.3 baseline, see Section 10.1):** **Before** adding an adapter, API route, form endpoint, login or dashboard: review the Astro and `sharp` advisories reported by `npm audit` against installed `astro@7.0.3` and `sharp@0.34.5`; get approval for a specific dependency upgrade path (the P0.3 audit showed `astro` needs 7.2.8 or later for the AVIF fix); apply it on a branch; then re-run `astro-check`, `build`, the P0.3 baseline checks (routes, 404, overflow, trust banner and testimonials intact) and `npm audit`. A plain `npm audit fix` was dry-run in P0.3 and failed on a peer-dependency conflict; do not use `--force`. Record the chosen versions and any remaining findings with a reason for accepting each.
 - [ ] Review current Astro and Node adapter documentation matching the installed versions.
 - [ ] Recommend the official Node adapter for the planned Node/Docker runtime unless inspection shows a better fit.
 - [ ] Compare keeping existing pages pre-rendered with making only private/API pages run on demand; prefer selective on-demand routes if practical.
@@ -739,7 +740,7 @@ The mapping must explicitly cover:
 - [ ] Confirm private leads, owner pages and any exports cannot be read from a signed-out browser or guessed URL.
 - [ ] Inspect browser bundles, Git history/new diffs and logs for credentials, sample real customer data and sensitive errors.
 - [ ] Verify HTTPS, secure cookies, sensible response caching, no indexing of owner pages and safe error messages.
-- [ ] Check dependency security findings and decide which issues genuinely affect the app.
+- [ ] Check dependency security findings and decide which issues genuinely affect the app. **Production blocker unless resolved or explicitly accepted:** the Astro advisories and other `npm audit` findings logged in Section 10.1 (19 findings at the P0.3 baseline).
 
 **Verify/done when:** Important access/security checks have recorded passing evidence and no unresolved high-risk exposure remains.
 
@@ -986,7 +987,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 | Phase | Status | Verified milestone | Evidence / link |
 |---|---|---|---|
-| 0. Assessment | **In progress** | New working repository verified; selected source/trust/testimonial files inspected; local baseline pending | `astro-MASTER-flyio` `main` tree `3dac95ba0467d6e2339b98d5c7c71460e948c022` (2026-10-13) |
+| 0. Assessment | **In progress** (P0.1 and P0.3 complete; P0.2 and P0.4 open) | Local baseline verified: `npm ci`, `astro-check` and `build` pass; 16 routes + 404 checked; no overflow at 3 widths | `main` at `3cc073c`, 2026-10-14; details in Section 10.1 |
 | 1. Astro backend | Not started | Server route + existing pages still work | — |
 | 2. SQLite | Not started | Storage/read tests + clean schema creation | — |
 | 3. Forms | Not started | Homepage/contact/service pathways save leads | — |
@@ -1000,11 +1001,11 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 ### Working notes
 
-**Current working task:** P0.3, untouched local build/browser baseline **in `astro-MASTER-flyio`**.  
-**Next recommended task:** P0.3.  
-**Current blocker:** No local runtime/build verification has been performed; local machine/tool setup and actual test results remain to be collected.  
+**Current working task:** None in progress. P0.1 and P0.3 completed 2026-10-14 (local `main` at `3cc073c`).  
+**Next recommended task:** Finish the open P0.2 inventory items, then P0.4. Do not start Phase 1 until the Astro security flag below is addressed in P1.1.  
+**Current blocker:** None for P0.2/P0.4. **Gate for Phase 1 and production:** the Astro (critical) and other `npm audit` findings in Section 10.1 must be reviewed and remediated before enabling server-side functionality or deploying.  
 **Pending approvals:** D02–D15 and the **real-client portion of D01** at their indicated phases. D01 master trust/testimonial preservation is an explicit owner decision, not a pending approval.  
-**Confirmed for this revision:** New `astro-MASTER-flyio` repository, branch, selected source files, hero trust content and testimonial section. The new plan was revised locally. No application implementation, builds, deployments or GitHub writes were performed during this revision.
+**Confirmed for this revision:** New `astro-MASTER-flyio` repository, branch, selected source files, hero trust content and testimonial section. The new plan was revised locally. No application implementation, builds, deployments or GitHub writes were performed during that 2026-10-13 revision. (The 2026-10-14 P0.3 baseline runs are recorded in Section 10.1.)
 
 ### Decision log
 
@@ -1022,16 +1023,49 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 |---|---|---|---|
 | 2026-10-13 | P0.1 source review (partial) | New working repo/tree, selected instructions/config and absence of plan file in its `main`. | `astro-MASTER-flyio` tree `3dac95ba...`; runtime tests not run |
 | 2026-10-13 | P0.2 source identification (partial) | Main form widgets, shared content, theme tokens, master trust indicators and testimonial section/content identified. | GitHub source review only; browser tests not run |
+| 2026-10-14 | P0.1 (complete) | Remote, branch, clean tree, and commits since tree `3dac95b` (documentation only) reconciled with GitHub. | `git fetch`; `HEAD` = `origin/main` = `3cc073c` |
+| 2026-10-14 | P0.3 (complete) | Lockfile install, `astro-check`, `build`, 16 routes + 404, form destinations (source), responsive/overflow checks, console review, static-route confirmation. | `main` at `3cc073c`; results in Section 10.1. Repo remained clean (no tracked files changed). |
 
 ### Blockers and open questions (update after each session)
 
 - [ ] For an **actual client launch**, what verified brand, rating, review count, license/insurance status and authentic testimonials should be used? Keep the master demo trust elements regardless.
-- [ ] Has the existing website ever had a successful local build with this exact version? Capture results.
+- [x] Has the existing website ever had a successful local build with this exact version? Capture results. *(Yes: 2026-10-14, `main` at `3cc073c`, `npm run build` exit 0, 32 pages. See Section 10.1.)*
+- [ ] **Astro and dependency security findings (Section 10.1):** approve an upgrade path (P1.1) before server-side work or deployment.
 - [ ] Which owner email and private domain will be used for testing and eventual launch? Do not enter credentials into this public document.
 - [ ] Are full-service-address and email mandatory, optional, or a later form improvement?
 - [ ] Does the owner need simple New/Contacted/Closed statuses in V1?
 - [ ] What is the accepted downtime/data-loss tolerance for one Fly.io Machine?
 - [ ] What secure login method best matches the current Astro/server environment?
+
+### 10.1 P0.3 baseline evidence and known issues (2026-10-14)
+
+**Environment:** Windows 11; Node v24.17.0; npm 11.13.0; repo `jonexe2/astro-MASTER-flyio`, branch `main`, commit `3cc073c`; `astro@7.0.3` installed (declared `^7.0.2`).
+
+| Test | Command / steps | Expected | Actual | Result |
+|---|---|---|---|---|
+| Install | `npm ci` | Locked install | 505 packages, exit 0; 19 audit findings reported | PASS |
+| Type/content check | `npm run astro-check` | No errors | 144 files: 0 errors, 0 warnings, 0 hints | PASS |
+| Production build | `npm run build` | Build completes | Exit 0; 32 pages in ~25 s; sitemap created; no warnings/errors in output | PASS |
+| Routes (dev) | HTTP request + browser to 16 real routes | 200 | All 200 | PASS |
+| 404 | Visit `/does-not-exist/` | Custom 404 page, status 404 | "Page Not Found" page, status 404 | PASS |
+| Master trust content | Homepage text check | `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` present | All three present (also visible in screenshots) | PASS |
+| Testimonials | Homepage and service pages | Section present | Homepage: carousel rendered and viewed at 768 px, next/previous buttons present. The 6 HVAC service pages: testimonial content detected in the page HTML by text match only; not visually inspected | PASS (homepage visual; service pages text-match only) |
+| Overflow | 12 real pages + the 404 page x 375/768/1280 px (hidden same-origin frames) | No horizontal scroll | 0 overflows (39 checks) | PASS |
+| Console, clean tab | Fresh tab, visit 15 real pages after server restart | No errors | No console errors | PASS |
+| Repo unchanged | `git status` after all runs | Clean | Clean (`node_modules/`, `.astro/`, `dist/` are gitignored) | PASS |
+| Form submission | Not run (by design) | n/a | No form was submitted; no data sent to the template address | NOT RUN (intentional) |
+
+**Not done in P0.3:** no screenshot files were saved; tablet/mobile visual review covered the homepage (and its testimonial section), other pages were checked by overflow measurement only; the service-page testimonials were confirmed by text match, not visually; no form was submitted. No form, design or content was changed.
+
+**Known issues and flags (nothing here has been fixed):**
+
+1. **Dependency audit: 19 packages flagged (not 19 independent attacks).** `npm audit` (2026-10-14, `main` at `3cc073c`) flags 19 packages (1 critical, 14 high, 4 moderate) carrying about 43 distinct advisories; 4 of the 19 (`@realfavicongenerator/image-adapter-node`, `@tailwindcss/typography`, `argparse`, `svgdom`) are flagged only because they depend on another flagged package, and a few packages (`fast-uri`: 8 advisories, `devalue`: 7) account for many entries. Whether each is actually exploitable depends on how the package is used (see item 2). Production-only audit (`npm audit --omit=dev`): **two packages, `js-yaml` and `smol-toml`** (both high; both parse files the project itself authors). Highest installed-version findings: `astro@7.0.3`, `sharp@0.34.5`, `devalue@5.8.1`, `smol-toml@1.7.0`, `toml@4.1.1`, `js-yaml@3.15.0` and `4.3.0`, `postcss@8.5.15`, `svgo@4.0.1`, `fast-uri@3.1.2`, `image-size@1.2.1`, `nanoid@3.3.15`, `source-map-js@1.2.1`, `http-cache-semantics@4.2.0`, `postcss-selector-parser@6.0.10`, `sprintf-js@1.0.3`, `argparse@1.0.10`. All flagged packages run on the developer's computer at build/dev time; none run on a visitor-facing server today because the site is fully static. `npm audit fix --dry-run` fails with a peer-dependency conflict (`astro@7.3.8` needs `@astrojs/markdown-remark` ^7.3, lockfile has 7.2.0); `--force` was not used and nothing was changed. `sharp` shows no automatic fix because the declared range `^0.34.5` excludes the fixed `0.35.x` line (`0.35.5` exists; Astro 7.2.8 requires `sharp` 0.35.4), so a `package.json` range change would be needed. For `@tailwindcss/typography`, npm's suggested "fix" is a downgrade to 0.5.4 and should not be used. `astro@7.3.8`, `@astrojs/markdown-remark@7.3.2`, `@astrojs/mdx@7.0.8` and `toml@4.3.0` are within the declared ranges; `@astrojs/mdx` 8, `toml` 5, Preline 5, TypeScript 7 and the favicon packages' 0.9 line are major updates not needed for these findings. Whether an upgrade changes theme behavior is **unknown** until tested on a branch.
+2. **Astro security findings: REVIEW, APPROVE AND TEST DEPENDENCY UPGRADES BEFORE ENABLING ANY SERVER-SIDE FUNCTIONALITY (adapter, API/form endpoint, login, dashboard) OR PRODUCTION DEPLOYMENT.** Installed `astro@7.0.3`. Advisories (severity per the advisory): remote code execution through AVIF image optimization via `libheif`, **critical**, CVSS 9.8, affects `<7.2.8`, GHSA-26w7-cxv4-gfx2 (this one advisory is why the audit labels Astro "critical"; the advisory says projects are affected when an attacker can cause Astro to process an untrusted AVIF image); `astro/hono` pipeline can bypass `security.checkOrigin`, moderate, `>=7.0.0 <7.0.6`, GHSA-8mv7-9c27-98vc; XSS via unescaped spread attribute names, moderate, `<7.0.6`, GHSA-f48w-9m4c-m7f5; reflected XSS via View Transition animation properties, moderate, `<=7.0.9`, GHSA-4g3v-8h47-v7g6; authorization bypass when stripping a configured `base`, moderate, `<=7.2.3` (fixed 7.2.4), GHSA-376h-93r7-7g6f (needs a non-root `base` plus middleware that authorizes by `context.url.pathname`); XSS via `transition:*` directive values, low, `<7.0.4`, GHSA-7pw4-f3q4-r2p2. `sharp@0.34.5` has three high advisories (libvips, libheif, librsvg; GHSA-f88m-g3jw-g9cj, GHSA-rgj7-g3m4-5g8c, GHSA-wq5f-xc86-pv6w, fixed in 0.35.0 to 0.35.5). Confirmed for the current static site: no adapter, server output, middleware, `base` setting, view transitions or `astro/hono` usage found in `src`, `scripts` or `astro.config.mjs`; **no AVIF images found** in `src/` or `public/` (the only "avif" reference is a type name in `src/lib/utils/bgOptimizedImage.ts`); **no customer image-upload feature exists or is planned for V1**. So these are **not confirmed exploitable today**. **Possible future risk:** once server rendering, form endpoints and a login exist, the `checkOrigin` and `devalue` issues become relevant (form/CSRF protection and server data handling), and the XSS issues matter if customer-supplied text is rendered; the AVIF/`sharp` issues would matter only if untrusted images are ever processed. **Unknown:** whether any component spreads attacker-influenced attribute names; how Astro uses `http-cache-semantics` internally; whether Astro 7.3.8 changes theme behavior. Required before server-side work (P1.1 gate): approve an upgrade path (likely `astro` to 7.2.8 or later, with matching `@astrojs/markdown-remark` and `sharp` versions and `devalue`/`smol-toml`/`svgo` as resolved), apply it on a branch, and re-run `astro-check`, `build`, the P0.3 baseline checks (16 routes, 404, no overflow, trust banner and testimonials intact) and `npm audit`. Build/dev-tooling findings (`postcss`, `nanoid`, `source-map-js`, `postcss-selector-parser`, `js-yaml`, `toml`, `fast-uri`, favicon tools) process only project-authored files and may wait or be taken opportunistically within declared version ranges.
+3. **Development-server errors (dev only).** (a) `404 (Not Found)` console lines appear only when requesting the nonexistent test URL; expected behavior. (b) `504 (Outdated Optimize Dep)` on `/@id/astro/runtime/client/dev-toolbar/entrypoint.js` (Astro's dev toolbar) occurred once during the first heavy cold-cache session; **not reproduced** after a server restart (fresh tab, 15 pages, zero errors). The exact triggering dependency was not confirmed. The production build had no errors.
+4. **Placeholder form destination.** Both forms POST JSON via `formSubmit` to `https://formsubmit.co/ajax/temp.gats@gmail.com` (`src/config/config.toml`, `contactFormAction`). This is a template address, not lead storage. `FormHandle.ts` also contains a hard-coded Formspree URL used only if the provider is set to `formspree`. Do not submit real or test customer data to it.
+5. **Leftover template/IT content (preserve master trust/testimonials; this is a cleanup list, not an instruction to remove them):** `config.toml` tagline "Free IT Solutions & Services Astro & Tailwind CSS Theme" appears in every page title and the site is named "Techlo"; `baseUrl` is `https://techlo-lite-astro.pages.dev/`; header shows `hello@example.com` and `518-564-3200`; 404 page and blog are IT-themed (blog also has a form on `/blog/` and post pages); `/services/alternative-services/` and `/services/hero-alternatives/` are IT demo pages; `/services/service-03/` title contains "BlueFlame Heating & Air"; the contact form still has IT-project fields (Budget, Start Date, Project Type, Preferred Contact); page content references Boston, MA. Testimonial text is generic IT-business quotes. Additional observations from the 2026-10-14 contact-page review: the contact section shows an address and phone (`1800 Market Street, Suite 420, San Francisco, CA 94103`, `+1 415 555 2300`) that differ from the header's (`1791 Yorkshire Circle Kitty Hawk, NC 279499`, `518-564-3200`); the heading reads "Let's build an awesome project together" with IT-project copy; the service dropdown offers IT services (Web & Mobile App Development, Cloud Infrastructure, Cybersecurity Review, Data Tracking & Analytics, Automation Workflow).
+6. **Large source image.** `alternative-hero-hvac.jpg` is about 2.8 MB at source; the build outputs optimized WebP variants (about 37 kB to 272 kB).
+7. **Route naming.** HVAC service pages use generic slugs (`service-02` to `service-06`, `service-custom-slug`) and the services index is separate; SEO-friendly URLs are a later decision, not a defect found by tests.
 
 **Repository protection reminder:** Never push, merge, deploy, or update this plan in the original `techlo-astro-MASTER-Dupe-2`. Only the working `astro-MASTER-flyio` is in scope.
 
@@ -1085,6 +1119,7 @@ Use official documentation matching the actual installed versions before issuing
 - [ ] Reimporting does not duplicate leads or send unintended “new lead” emails; a newly submitted lead after recovery works.
 - [ ] Real backup/snapshot recovery has been tested separately and limits are understood.
 - [ ] Docker/Fly.io production-style deployment uses a persistent volume and survives verified restart/deployment operations.
+- [ ] A documented dependency security review exists (`npm audit` run on the release build, each remaining finding recorded as fixed, or accepted with a reason such as build-time-only use); no unresolved critical/high finding affecting server-side or production code, and the Astro/`sharp` findings from Section 10.1 are resolved. Unrelated build-tool warnings need not reach zero.
 - [ ] Security, performance, SEO and business-content checks pass; master demo trust/testimonial content remains intact, **any real-client public claims are backed by real evidence or hidden in that client deployment**, and no secrets are exposed.
 - [ ] The development/operations instructions and template-reuse process are understandable and verified, with `astro-MASTER-flyio` identified as the master and the old Techlo duplicate protected.
 
