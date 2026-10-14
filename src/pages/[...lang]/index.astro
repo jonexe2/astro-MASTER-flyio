@@ -1,0 +1,52 @@
+---
+import Base from "@/layouts/Base.astro";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import { generatePaths } from "@/lib/utils/i18nUtils.ts";
+import BlogSection from "@/components/sections/BlogSection.astro";
+import AlternativeHeroSection from "@/components/sections/AlternativeHeroSection.astro";
+import ServicesSection from "@/components/sections/ServicesSection.astro";
+import RepairVsReplacementSection from "@/components/sections/RepairVsReplacementSection.astro";
+import WorkingProcessSection from "@/components/sections/WorkingProcessSection.astro";
+import TestimonialQuoteSection from "@/components/sections/TestimonialQuoteSection.astro";
+import HomepageFaqSection from "@/components/sections/HomepageFaqSection.astro";
+import HomepageServiceAreaShowcaseSection from "@/components/sections/HomepageServiceAreaShowcaseSection.astro";
+import ContactSectionTwo from "@/components/sections/ContactSectionTwo.astro";
+import HomeownerTrustSection from "@/components/sections/HomeownerTrustSection.astro";
+
+export function getStaticPaths() {
+  return generatePaths();
+}
+
+const homepageContent = await getEntryCTM(
+  "homepage",
+  "-index",
+  Astro.currentLocale,
+);
+
+const duplicateSkillSectionContent = await getEntryCTM(
+  "sections",
+  "startup-skill-section-duplicate",
+  Astro.currentLocale,
+);
+---
+
+<Base {...homepageContent?.data} headerLayout="three" headerPosition="fixed">
+  <AlternativeHeroSection hasFixedHeaderOffset />
+  <ServicesSection
+    hasLightBackground={false}
+    hasBottomSpacing
+    content={{
+      options: {
+        layout: "carousel",
+      },
+    }}
+  />
+  <RepairVsReplacementSection />
+  <HomeownerTrustSection content={duplicateSkillSectionContent.data} />
+  <WorkingProcessSection hasLightBackground content={{ eyebrow: "HOW IT WORKS" }} />
+  <TestimonialQuoteSection hasSectionSpacing={false} />
+  <HomepageFaqSection />
+  <HomepageServiceAreaShowcaseSection />
+  <ContactSectionTwo hasSectionSpacing={false} />
+  <BlogSection />
+</Base>

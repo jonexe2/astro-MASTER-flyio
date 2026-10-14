@@ -1,0 +1,60 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import { markdownify } from "@/lib/utils/textConverter";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import type { ctaSectionSchema } from "@/sections.schema";
+import Button from "@/components/Button.astro";
+import Icons from "@/helpers/Icons.astro";
+
+type ServiceEmergencyCtaContent = Section &
+  NonNullable<z.infer<typeof ctaSectionSchema>>;
+
+type Props = {
+  content?: ServiceEmergencyCtaContent;
+};
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "service-emergency-cta-section",
+    Astro.currentLocale,
+  )
+)?.data as ServiceEmergencyCtaContent;
+
+const actualContent = overrideObjects(
+  { ...defaultContent },
+  Astro.props.content || {},
+) as ServiceEmergencyCtaContent;
+
+const { enable = true, title, button } = actualContent;
+
+if (!enable || !title || !button) {
+  return null;
+}
+---
+
+<section
+  aria-labelledby="service-emergency-cta-heading"
+  class="bg-theme-dark pt-0">
+  <div class="container py-8 lg:py-10">
+    <div
+      class="flex flex-col items-center justify-between gap-6 text-center lg:flex-row lg:text-start">
+      <div class="flex flex-col items-center gap-4 lg:flex-row">
+        <span
+          class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white"
+          aria-hidden="true">
+          <Icons icon="Phone" class="size-5" />
+        </span>
+        <h2
+          id="service-emergency-cta-heading"
+          class="text-h4-sm text-white md:text-h4"
+          set:html={markdownify(title)}
+        />
+      </div>
+
+      <Button {...button} />
+    </div>
+  </div>
+</section>

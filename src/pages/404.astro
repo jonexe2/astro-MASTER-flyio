@@ -1,0 +1,27 @@
+---
+import Base from "@/layouts/Base.astro";
+import Button from "@/components/Button.astro";
+import { useTranslations } from "@/lib/utils/i18nUtils.ts";
+
+const t = await useTranslations(Astro.currentLocale as string);
+---
+
+<Base title={t("notFound.title")} disableTagline={true} fitToScreen={false}>
+  <section class="section-spacing-vertical">
+    <div class="container">
+      <div class="flex flex-col items-center gap-y-10">
+        <div class="space-y-4 text-center text-lg">
+          <h1 class="error-code">404</h1>
+          <h2 class="text-h1-sm md:text-h1">{t("notFound.heading")}</h2>
+          <p>{t("notFound.description")}</p>
+        </div>
+        <Button
+          class="btn-light rounded-md"
+          label={t("notFound.buttonLabel")}
+          url="/"
+          variant="fill"
+        />
+      </div>
+    </div>
+  </section>
+</Base>

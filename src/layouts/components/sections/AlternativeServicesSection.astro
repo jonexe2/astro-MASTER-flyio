@@ -1,0 +1,128 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import Button from "@/components/Button.astro";
+import OptimizedImage from "@/components/utilities/OptimizedImage.astro";
+import DynamicIcon from "@/helpers/DynamicIcon.astro";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import type { alternativeServicesSectionSchema } from "@/sections.schema";
+
+type AlternativeServicesContent = Section &
+  NonNullable<z.infer<typeof alternativeServicesSectionSchema>>;
+
+type Props = {
+  content?: AlternativeServicesContent;
+  showIcons?: boolean;
+};
+
+const { content, showIcons = false } = Astro.props;
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "alternative-services-section",
+    Astro.currentLocale,
+  )
+)?.data as AlternativeServicesContent;
+
+const actualContent = overrideObjects(
+  { ...defaultContent },
+  content || {},
+) as AlternativeServicesContent;
+
+const { enable = true, services = [] } = actualContent;
+
+if (!enable || services.length === 0) {
+  return null;
+}
+---
+
+<section
+  aria-label="Alternative Services"
+  class:list={[
+    "bg-theme-light overflow-visible px-3 pb-16 sm:px-0 lg:pb-20 xl:pb-24",
+    showIcons && "pt-0!",
+  ]}>
+  <div class="container min-w-0">
+    <div class="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {
+        services.map((service) => (
+          <article class="alternative-service-card group border-border-light flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-white p-4 sm:p-5 lg:p-6">
+            <div
+              class:list={[
+                "relative overflow-visible",
+                showIcons
+                  ? "sm:-mx-1.5 sm:-mt-1.5 lg:-mx-2 lg:-mt-2"
+                  : "lg:-mx-2 lg:-mt-2",
+              ]}>
+              <OptimizedImage
+                src={service.image}
+                alt={service.imageAlt}
+                width={720}
+                height={480}
+                widths={[540, 720, 900]}
+                sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                class="aspect-3/2 w-full rounded-xl object-cover"
+              />
+
+              {showIcons && service.icon && (
+                <span
+                  class="alternative-service-icon pointer-events-none absolute -bottom-4 left-4 z-10 flex size-16 items-center justify-center rounded-2xl border bg-white text-primary md:size-17 lg:size-18"
+                  aria-hidden="true">
+                  <DynamicIcon
+                    name={service.icon}
+                    class="size-7 lg:size-8"
+                    stroke-width={1.75}
+                  />
+                </span>
+              )}
+            </div>
+
+            <div
+              class:list={[
+                "flex flex-1 flex-col px-1 pb-1",
+                showIcons ? "pt-12 lg:pt-13" : "pt-7",
+              ]}>
+              <h2 class="text-h6">{service.title}</h2>
+              <p class="mt-2">{service.description}</p>
+
+              <div class="mt-auto pt-7">
+                <Button {...service.button} />
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .alternative-service-card {
+    box-shadow:
+      0 2px 6px color-mix(in srgb, var(--color-dark) 10%, transparent),
+      0 0 20px color-mix(in srgb, var(--color-dark) 11%, transparent),
+      0 14px 30px -10px color-mix(in srgb, var(--color-dark) 20%, transparent);
+    transform: translateY(0);
+    transition:
+      box-shadow 300ms ease-out,
+      transform 300ms ease-out;
+  }
+
+  .alternative-service-icon {
+    box-shadow:
+      0 2px 6px color-mix(in srgb, var(--color-dark) 8%, transparent),
+      0 8px 18px -8px color-mix(in srgb, var(--color-dark) 18%, transparent);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .alternative-service-card:hover {
+      box-shadow:
+        0 3px 8px color-mix(in srgb, var(--color-dark) 15%, transparent),
+        0 0 28px color-mix(in srgb, var(--color-dark) 17%, transparent),
+        0 18px 36px -10px color-mix(in srgb, var(--color-dark) 28%, transparent);
+      transform: translateY(-3px);
+    }
+  }
+</style>

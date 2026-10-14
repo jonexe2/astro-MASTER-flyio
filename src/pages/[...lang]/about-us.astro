@@ -1,0 +1,33 @@
+---
+import Base from "@/layouts/Base.astro";
+import AboutUsIntroSection from "@/components/sections/AboutUsIntroSection.astro";
+import ServiceAreaSection from "@/components/sections/ServiceAreaSection.astro";
+import PageHeader from "@/components/widgets/PageHeader.astro";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import { generatePaths } from "@/lib/utils/i18nUtils.ts";
+
+export function getStaticPaths() {
+  return generatePaths();
+}
+
+const content = (
+  await getEntryCTM("sections", "about-us-intro-section", Astro.currentLocale)
+)?.data;
+
+if (!content) {
+  return new Response("About Us content not found", { status: 404 });
+}
+
+const { pageTitle, metaDescription } = content;
+---
+
+<Base
+  metaTitle={pageTitle}
+  metaDescription={metaDescription}
+  fitToScreen={false}>
+  <PageHeader
+    content={{ title: pageTitle, currentBreadcrumbLabel: pageTitle }}
+  />
+  <AboutUsIntroSection content={content} />
+  <ServiceAreaSection />
+</Base>

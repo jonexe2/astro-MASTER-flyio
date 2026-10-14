@@ -1,0 +1,40 @@
+[
+  {
+    "name": "Sora",
+    "variants": [
+      {
+        "style": "normal",
+        "weight": "400"
+      },
+      {
+        "style": "normal",
+        "weight": "500"
+      },
+      {
+        "style": "normal",
+        "weight": "700"
+      }
+    ],
+    "preload": true,
+    "display": "swap",
+    "cssVariable": "--font-primary",
+    "provider": "google",
+    "subsets": ["latin"],
+    "fallback": "sans-serif"
+  },
+  {
+    "name": "Montserrat",
+    "variants": [
+      {
+        "style": "normal",
+        "weight": "800"
+      }
+    ],
+    "preload": true,
+    "display": "swap",
+    "cssVariable": "--font-montserrat",
+    "provider": "google",
+    "subsets": ["latin"],
+    "fallback": "sans-serif"
+  }
+]

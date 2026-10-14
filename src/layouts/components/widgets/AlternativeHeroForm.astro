@@ -1,0 +1,523 @@
+---
+import type { z } from "astro/zod";
+import config from ".astro/config.generated.json";
+import Button from "@/components/Button.astro";
+import DynamicIcon from "@/helpers/DynamicIcon.astro";
+import type { alternativeHeroFormSchema } from "@/sections.schema";
+
+type FormContent = z.infer<typeof alternativeHeroFormSchema>;
+
+type Props = {
+  form: FormContent;
+};
+
+const { form } = Astro.props;
+const {
+  settings: { contactFormAction, contactFormProvider },
+} = config;
+
+const fieldIds = {
+  fullName: "alternative-hero-full-name",
+  phone: "alternative-hero-phone",
+  email: "alternative-hero-email",
+  services: "alternative-hero-services",
+};
+---
+
+<div
+  class="border-border-light w-full max-w-lg rounded-3xl border bg-white px-6 py-8 shadow-xl shadow-black/15 sm:px-9 sm:py-10">
+  <div class="text-center">
+    <h3 class="text-dark text-h4-sm md:text-h4">{form.title}</h3>
+    <span
+      class="bg-primary mx-auto mt-4 block h-1 w-12 rounded-full"
+      aria-hidden="true"></span>
+    <p class="text-text-light mt-4 text-sm">{form.description}</p>
+  </div>
+
+  <form
+    id="alternative-hero-form"
+    class="mt-8 scroll-mt-32"
+    method="post"
+    {...{
+      "data-action": contactFormAction,
+      "data-provider": contactFormProvider,
+      "data-message-error": form.messages.error,
+      "data-message-unknown-provider": form.messages.unknownProvider,
+      "data-netlify": contactFormProvider === "netlify" ? "true" : undefined,
+      action: contactFormProvider === "netlify" ? contactFormAction : undefined,
+    }}>
+    {
+      form.emailSubject && (
+        <input
+          type="hidden"
+          name={
+            ["formsubmit.co", "formspree"].includes(contactFormProvider)
+              ? "_subject"
+              : "subject"
+          }
+          value={form.emailSubject}
+        />
+      )
+    }
+
+    {
+      contactFormProvider === "formsubmit.co" && (
+        <input type="hidden" name="_template" value="table" />
+      )
+    }
+
+    <p
+      id="alternative-hero-validation-error"
+      class="mb-5 hidden rounded-md border border-red-400/35 bg-red-400/10 px-4 py-3 text-sm text-red-950"
+      role="alert"
+      aria-live="assertive"
+      data-validation-message={form.messages.validation}
+      data-services-message={form.messages.servicesRequired}>
+    </p>
+
+    <div class="space-y-5">
+      <div class="alternative-hero-field">
+        <label
+          class="text-dark mb-2 block text-sm font-medium"
+          for={fieldIds.fullName}>
+          {form.fields.fullNameLabel}
+        </label>
+        <input
+          id={fieldIds.fullName}
+          class="alternative-hero-control border-border-light focus:border-primary focus:ring-primary/10 text-dark w-full rounded-lg border bg-white px-4 py-3 text-base transition-colors outline-none focus:ring-4"
+          type="text"
+          name="fullName"
+          autocomplete="name"
+          required
+        />
+      </div>
+
+      <div class="alternative-hero-field">
+        <label
+          class="text-dark mb-2 block text-sm font-medium"
+          for={fieldIds.phone}>
+          {form.fields.phoneLabel}
+        </label>
+        <input
+          id={fieldIds.phone}
+          class="alternative-hero-control border-border-light focus:border-primary focus:ring-primary/10 text-dark w-full rounded-lg border bg-white px-4 py-3 text-base transition-colors outline-none focus:ring-4"
+          type="tel"
+          name="phone"
+          autocomplete="tel"
+          required
+        />
+      </div>
+
+      <div class="alternative-hero-field">
+        <label
+          class="text-dark mb-2 block text-sm font-medium"
+          for={fieldIds.email}>
+          {form.fields.emailLabel}
+        </label>
+        <input
+          id={fieldIds.email}
+          class="alternative-hero-control border-border-light focus:border-primary focus:ring-primary/10 text-dark w-full rounded-lg border bg-white px-4 py-3 text-base transition-colors outline-none focus:ring-4"
+          type="email"
+          name="email"
+          autocomplete="email"
+          required
+        />
+      </div>
+    </div>
+
+    <div class="alternative-hero-field mt-5" data-services-multiselect>
+      <label
+        class="text-dark mb-2 block text-sm font-medium"
+        id="alternative-hero-services-label">
+        {form.fields.servicesLabel}
+      </label>
+
+      <div class="relative">
+        <button
+          id="alternative-hero-services-trigger"
+          class="border-border-light focus:border-primary focus:ring-primary/10 text-dark flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border bg-white px-4 py-3 text-left text-base transition-colors outline-none focus:ring-4"
+          type="button"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="alternative-hero-services-panel"
+          aria-labelledby="alternative-hero-services-label alternative-hero-services-trigger-text"
+          aria-describedby="alternative-hero-services-error">
+          <span
+            id="alternative-hero-services-trigger-text"
+            data-placeholder={form.fields.servicesPlaceholder}>
+            {form.fields.servicesPlaceholder}
+          </span>
+          <DynamicIcon
+            name="ChevronDown"
+            class="text-text-default size-5 shrink-0"
+            aria-hidden="true"
+          />
+        </button>
+
+        <div
+          id="alternative-hero-services-panel"
+          class="border-border-light absolute top-full right-0 left-0 z-30 mt-2 max-h-72 overflow-y-auto rounded-lg border bg-white p-2 shadow-xl shadow-black/15"
+          role="group"
+          aria-labelledby="alternative-hero-services-label"
+          hidden>
+          {
+            form.services.map((service, index) => (
+              <label class="hover:bg-theme-light focus-within:bg-theme-light text-dark flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors">
+                <input
+                  id={`alternative-hero-service-${index + 1}`}
+                  class="text-primary focus:ring-primary border-border-dark/30 size-5 shrink-0 cursor-pointer rounded focus:ring-2 focus:ring-offset-2"
+                  type="checkbox"
+                  value={service}
+                  data-service-option
+                />
+                <span>{service}</span>
+              </label>
+            ))
+          }
+        </div>
+      </div>
+
+      <input
+        id={fieldIds.services}
+        type="hidden"
+        name="services"
+        value=""
+        required
+      />
+      <p
+        id="alternative-hero-services-error"
+        class="mt-2 hidden text-sm text-red-700"
+        role="alert">
+        {form.messages.servicesRequired}
+      </p>
+    </div>
+
+    <div class="mt-8">
+      <Button
+        {...form.submitButton}
+        tag="button"
+        type="submit"
+        id="alternative-hero-submit"
+      />
+    </div>
+
+    {
+      form.trustNote && (
+        <p class="text-text-light mt-3 flex items-center justify-center gap-1.5 text-center text-xs sm:text-sm">
+          <DynamicIcon name="Lock" class="size-4 shrink-0" aria-hidden="true" />
+          <span>{form.trustNote}</span>
+        </p>
+      )
+    }
+
+    <div
+      class="message pending border-primary/30 bg-primary/10 text-dark mt-5 hidden rounded-md border px-4 py-3 text-sm"
+      role="status"
+      aria-live="polite">
+      <p
+        class="contact-form-message-content"
+        data-default={form.messages.pending}>
+        {form.messages.pending}
+      </p>
+    </div>
+
+    <div
+      class="message success mt-5 hidden rounded-md border border-emerald-400/35 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-950"
+      role="status"
+      aria-live="polite">
+      <p
+        class="contact-form-message-content"
+        data-default={form.messages.success}>
+        {form.messages.success}
+      </p>
+    </div>
+
+    <div
+      class="message error mt-5 hidden rounded-md border border-red-400/35 bg-red-400/10 px-4 py-3 text-sm text-red-950"
+      role="alert"
+      aria-live="assertive">
+      <p
+        class="contact-form-message-content"
+        data-default={form.messages.error}>
+        {form.messages.error}
+      </p>
+    </div>
+  </form>
+</div>
+
+<script>
+  import {
+    formspreeSubmit,
+    netlifySubmit,
+    formSubmit,
+    isFormFilled,
+    setMessage,
+  } from "@/lib/utils/FormHandle";
+
+  const initAlternativeHeroForm = () => {
+    const form = document.getElementById(
+      "alternative-hero-form",
+    ) as HTMLFormElement | null;
+
+    if (!form || form.dataset.alternativeHeroFormReady) return;
+
+    form.dataset.alternativeHeroFormReady = "true";
+
+    const multiselect = form.querySelector<HTMLElement>(
+      "[data-services-multiselect]",
+    );
+    const trigger = form.querySelector<HTMLButtonElement>(
+      "#alternative-hero-services-trigger",
+    );
+    const triggerText = form.querySelector<HTMLElement>(
+      "#alternative-hero-services-trigger-text",
+    );
+    const panel = form.querySelector<HTMLElement>(
+      "#alternative-hero-services-panel",
+    );
+    const hiddenServices = form.querySelector<HTMLInputElement>(
+      "#alternative-hero-services",
+    );
+    const serviceError = form.querySelector<HTMLElement>(
+      "#alternative-hero-services-error",
+    );
+    const validationError = form.querySelector<HTMLElement>(
+      "#alternative-hero-validation-error",
+    );
+    const checkboxes = Array.from(
+      form.querySelectorAll<HTMLInputElement>("[data-service-option]"),
+    );
+
+    if (
+      !multiselect ||
+      !trigger ||
+      !triggerText ||
+      !panel ||
+      !hiddenServices ||
+      !serviceError ||
+      !validationError
+    ) {
+      return;
+    }
+
+    const setOpen = (open: boolean, focusOption = false) => {
+      panel.hidden = !open;
+      trigger.setAttribute("aria-expanded", String(open));
+
+      if (open && focusOption) {
+        checkboxes[0]?.focus();
+      }
+    };
+
+    const getSelectedServices = () =>
+      checkboxes
+        .filter((checkbox) => checkbox.checked)
+        .map(({ value }) => value);
+
+    const setServicesError = (hasError: boolean) => {
+      serviceError.classList.toggle("hidden", !hasError);
+      trigger.setAttribute("aria-invalid", String(hasError));
+      trigger.classList.toggle("border-red-500", hasError);
+    };
+
+    const syncServices = () => {
+      const selected = getSelectedServices();
+      hiddenServices.value = selected.join(", ");
+
+      if (selected.length === 0) {
+        triggerText.textContent =
+          triggerText.dataset.placeholder || "Select one or more services";
+      } else if (selected.length <= 2) {
+        triggerText.textContent = selected.join(", ");
+      } else {
+        triggerText.textContent = `${selected.length} services selected`;
+      }
+
+      if (selected.length > 0) {
+        setServicesError(false);
+      }
+    };
+
+    const showValidationError = (servicesMissing: boolean) => {
+      validationError.textContent = servicesMissing
+        ? validationError.dataset.servicesMessage || ""
+        : validationError.dataset.validationMessage || "";
+      validationError.classList.remove("hidden");
+    };
+
+    const clearControlError = (control: HTMLInputElement) => {
+      control.removeAttribute("aria-invalid");
+      control.classList.remove("border-red-500");
+    };
+
+    trigger.addEventListener("click", () => {
+      setOpen(panel.hasAttribute("hidden"));
+    });
+
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setOpen(panel.hasAttribute("hidden"));
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setOpen(true, true);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setOpen(true);
+        checkboxes.at(-1)?.focus();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+    });
+
+    panel.addEventListener("keydown", (event) => {
+      const currentIndex = checkboxes.indexOf(
+        document.activeElement as HTMLInputElement,
+      );
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        trigger.focus();
+      } else if (
+        (event.key === "Enter" || event.key === " ") &&
+        currentIndex >= 0
+      ) {
+        event.preventDefault();
+        const checkbox = checkboxes[currentIndex];
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      } else if (event.key === "ArrowDown" && currentIndex >= 0) {
+        event.preventDefault();
+        checkboxes[(currentIndex + 1) % checkboxes.length]?.focus();
+      } else if (event.key === "ArrowUp" && currentIndex >= 0) {
+        event.preventDefault();
+        checkboxes[
+          (currentIndex - 1 + checkboxes.length) % checkboxes.length
+        ]?.focus();
+      }
+    });
+
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", syncServices);
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (!multiselect.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    });
+
+    multiselect.addEventListener("focusout", () => {
+      window.setTimeout(() => {
+        if (!multiselect.contains(document.activeElement)) {
+          setOpen(false);
+        }
+      }, 0);
+    });
+
+    const requiredControls = Array.from(
+      form.querySelectorAll<HTMLInputElement>(
+        'input:not([type="hidden"])[required]',
+      ),
+    );
+
+    requiredControls.forEach((control) => {
+      control.addEventListener("invalid", () => {
+        control.setAttribute("aria-invalid", "true");
+        control.classList.add("border-red-500");
+      });
+
+      control.addEventListener("input", () => {
+        if (control.validity.valid) {
+          clearControlError(control);
+        }
+      });
+    });
+
+    form.addEventListener(
+      "invalid",
+      () => {
+        const servicesMissing = hiddenServices.value === "";
+        setServicesError(servicesMissing);
+        showValidationError(false);
+      },
+      true,
+    );
+
+    form.addEventListener("reset", () => {
+      window.setTimeout(() => {
+        syncServices();
+        setServicesError(false);
+        setOpen(false);
+        validationError.classList.add("hidden");
+        requiredControls.forEach(clearControlError);
+      }, 0);
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      syncServices();
+      validationError.classList.add("hidden");
+      const servicesMissing = hiddenServices.value === "";
+      const fieldsValid = form.checkValidity();
+
+      setServicesError(servicesMissing);
+
+      if (!fieldsValid || servicesMissing || !isFormFilled(form)) {
+        showValidationError(servicesMissing && fieldsValid);
+
+        if (!fieldsValid) {
+          form.reportValidity();
+        } else if (servicesMissing) {
+          trigger.focus();
+        }
+
+        return;
+      }
+
+      const provider = form.dataset.provider || "";
+      const action = form.dataset.action || "";
+      const fallbackMessage = form.dataset.messageError || "";
+      const unknownProviderMessage =
+        form.dataset.messageUnknownProvider || fallbackMessage;
+
+      setMessage("default", "pending", true, form);
+
+      try {
+        switch (provider) {
+          case "netlify":
+            await netlifySubmit(form, action);
+            break;
+          case "formsubmit.co":
+            await formSubmit({ form, action });
+            break;
+          case "formspree":
+            await formspreeSubmit(
+              Object.fromEntries(new FormData(form).entries()),
+              5000,
+              form,
+            );
+            break;
+          default:
+            throw new Error(unknownProviderMessage);
+        }
+      } catch (error) {
+        setMessage(
+          error instanceof Error ? error.message : fallbackMessage,
+          false,
+          false,
+          form,
+        );
+      }
+    });
+
+    syncServices();
+  };
+
+  initAlternativeHeroForm();
+  document.addEventListener("DOMContentLoaded", initAlternativeHeroForm);
+  document.addEventListener("astro:page-load", initAlternativeHeroForm);
+</script>

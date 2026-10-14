@@ -1,0 +1,138 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import { markdownify } from "@/lib/utils/textConverter";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import DynamicIcon from "@/helpers/DynamicIcon.astro";
+import type { serviceAreaSectionSchema } from "@/sections.schema";
+
+type ServiceAreaContent = Section &
+  NonNullable<z.infer<typeof serviceAreaSectionSchema>>;
+
+type Props = {
+  content?: ServiceAreaContent;
+  hasSectionSpacing?: boolean;
+};
+
+const defaultContent = (
+  await getEntryCTM("sections", "service-area-section", Astro.currentLocale)
+)?.data as ServiceAreaContent;
+
+const actualContent = overrideObjects(
+  { ...defaultContent },
+  Astro.props.content || {},
+) as ServiceAreaContent;
+
+const {
+  enable = true,
+  eyebrow,
+  title,
+  description,
+  cities = [],
+  mapLabel,
+  mapEmbedUrl,
+} = actualContent;
+
+const { hasSectionSpacing = true } = Astro.props;
+
+if (!enable) {
+  return null;
+}
+---
+
+<section class:list={[!hasSectionSpacing && "pt-0"]}>
+  <div class="section-spacing-vertical">
+    <div class="container">
+      <div class="mx-auto max-w-3xl space-y-4 text-center">
+        {
+          eyebrow && (
+            <div
+              class="flex items-center justify-center gap-3"
+              data-scroll-reveal="fade-up">
+              <span
+                class="bg-heat-accent h-1 w-8 rounded-full"
+                aria-hidden="true"
+              />
+              <p
+                class="text-primary text-base-sm font-semibold tracking-widest uppercase md:text-base"
+                set:html={markdownify(eyebrow)}
+              />
+            </div>
+          )
+        }
+        {
+          title && (
+            <h2
+              class="mx-auto"
+              data-scroll-reveal="blur-up"
+              data-scroll-reveal-delay="80"
+              set:html={markdownify(title)}
+            />
+          )
+        }
+        {
+          description && (
+            <p
+              class="text-text-default leading-body mx-auto max-w-2xl"
+              data-scroll-reveal="fade-up"
+              data-scroll-reveal-delay="160"
+              set:html={markdownify(description)}
+            />
+          )
+        }
+      </div>
+
+      {
+        cities.length > 0 && (
+          <div
+            class="mx-auto mt-14 max-w-5xl"
+            data-scroll-reveal="fade-up"
+            data-scroll-reveal-delay="120">
+            <ul
+              class="grid grid-cols-1 gap-x-8 gap-y-1 sm:grid-cols-2 lg:grid-cols-4"
+              role="list">
+              {cities.map((city) => (
+                <li class="flex items-center gap-3 border-b border-border-light py-4">
+                  <span class="text-primary flex size-7 shrink-0 items-center justify-center">
+                    <DynamicIcon name="MapPin" class="size-5" />
+                  </span>
+                  <span
+                    class="text-dark text-base font-medium"
+                    set:html={markdownify(city)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+
+      {
+        mapEmbedUrl && (
+          <div
+            class="mx-auto mt-16 max-w-5xl"
+            data-scroll-reveal="fade-up"
+            data-scroll-reveal-delay="120">
+            {mapLabel && (
+              <p
+                class="text-dark mb-4 text-center text-base font-semibold"
+                set:html={markdownify(mapLabel)}
+              />
+            )}
+            <div class="border-border-light overflow-hidden rounded-2xl border shadow-sm">
+              <iframe
+                title="Google Map showing Boston, Massachusetts"
+                src={mapEmbedUrl}
+                loading="lazy"
+                allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade"
+                class="h-75 w-full md:h-105"
+              />
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>

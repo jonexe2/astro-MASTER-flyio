@@ -1,0 +1,14 @@
+---
+import Base from "@/layouts/Base.astro";
+import { generatePaths } from "@/lib/utils/i18nUtils.ts";
+import AlternativeServicesSection from "@/layouts/components/sections/AlternativeServicesSection.astro";
+
+export function getStaticPaths() {
+  return generatePaths();
+}
+---
+
+<Base metaTitle="Alternative Services" fitToScreen={false} hideCallToAction>
+  <AlternativeServicesSection />
+  <AlternativeServicesSection showIcons />
+</Base>

@@ -1,0 +1,411 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import type { repairVsReplacementSectionSchema } from "@/sections.schema";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import Button from "@/components/Button.astro";
+import { Handshake } from "lucide";
+
+type RepairVsReplacementContent = Section &
+  NonNullable<z.infer<typeof repairVsReplacementSectionSchema>>;
+
+type Props = {
+  content?: RepairVsReplacementContent;
+};
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "repair-vs-replacement-section",
+    Astro.currentLocale,
+  )
+)?.data as RepairVsReplacementContent;
+
+const {
+  enable = true,
+  eyebrow,
+  title,
+  description,
+  panels = [],
+  recommendation,
+} = overrideObjects(
+  { ...defaultContent },
+  Astro.props.content || {},
+) as RepairVsReplacementContent;
+
+if (!enable || !title || panels.length !== 2 || !recommendation) {
+  return null;
+}
+
+const iconPaths: Record<string, string[]> = {
+  mechanical: [
+    "M13.1 4.75h5.8l.75 3.05c.72.27 1.4.67 2 1.17l3-.88 2.9 5.02-2.23 2.16c.06.38.1.77.1 1.16s-.04.78-.1 1.16l2.23 2.16-2.9 5.02-3-.88a9.1 9.1 0 0 1-2 1.17l-.75 3.05h-5.8l-.75-3.05a9.1 9.1 0 0 1-2-1.17l-3 .88-2.9-5.02 2.23-2.16a7.2 7.2 0 0 1 0-2.32l-2.23-2.16 2.9-5.02 3 .88a9.1 9.1 0 0 1 2-1.17l.75-3.05Z",
+    "M12.25 16.43a3.75 3.75 0 1 0 7.5 0 3.75 3.75 0 0 0-7.5 0Z",
+  ],
+  clock: [
+    "M16 5.25a10.75 10.75 0 1 0 0 21.5 10.75 10.75 0 0 0 0-21.5Z",
+    "M16 10v6.65l4.35 2.45",
+    "M9.15 7.75 7.5 5.95M22.85 7.75l1.65-1.8M12.25 3.75h7.5",
+  ],
+  performance: [
+    "M6 25.75h20",
+    "M8.5 22v-5.5h4V22m3.5 0V12h4v10m3.5 0V7.75h4V22",
+    "M7.25 12.25c4.4-4.6 9.25-5.75 14.6-3.45",
+    "m19.25 5.75 3.1 3.15-3.55 2.55",
+  ],
+  wrench: [
+    "M18.7 7.05a7.05 7.05 0 0 0-8.18 9.12L4.9 21.8a3.1 3.1 0 0 0 4.38 4.38l5.62-5.63a7.05 7.05 0 0 0 9.13-8.18l-4.35 4.35-4.38-1.18-1.18-4.37 4.58-4.12Z",
+    "M7.05 23.98h.02",
+  ],
+  savings: [
+    "M25.85 6.15c-8.65.05-14.6 3.25-16.55 8.65-1.25 3.43-.18 6.48 2.45 7.77 2.62 1.3 5.78.15 7.53-2.88 2.77-4.78 3.15-8.88 6.57-13.54Z",
+    "M6.1 26.25c3.85-6.3 8.1-9.93 14.62-13.35",
+    "M8.35 21.95c-.45-2.1-1.48-3.7-3.2-4.85",
+  ],
+  reliability: [
+    "M16 4.35c3.3 2.1 6.45 3.03 9.5 3.18v7.05c0 6.03-3.8 10.7-9.5 13.07-5.7-2.37-9.5-7.04-9.5-13.07V7.53c3.05-.15 6.2-1.08 9.5-3.18Z",
+    "m11.1 16.05 3.15 3.15 6.75-6.75",
+  ],
+  comfort: [
+    "M16 5.25 18.4 11l6.1.5-4.65 3.98 1.42 5.95L16 18.25l-5.27 3.18 1.42-5.95L7.5 11.5l6.1-.5L16 5.25Z",
+    "M5.25 25.5h7.5M19.25 25.5h7.5",
+    "M7.5 22.75v5.5M24.5 22.75v5.5",
+  ],
+  efficiency: [
+    "M16 27V15.25",
+    "M15.85 18.05c-5.25.08-8.35-2.55-8.7-7.88 5.27-.4 8.45 2.38 8.7 7.88Z",
+    "M16.15 14.85c.35-5.2 3.4-7.98 8.7-7.88-.08 5.3-3.4 8.13-8.7 7.88Z",
+    "M9.25 27h13.5",
+  ],
+};
+---
+
+<section
+  class="section-spacing-vertical bg-theme-light"
+  aria-labelledby="repair-vs-replacement-heading">
+  <div class="container">
+    <header class="mx-auto mb-12 max-w-4xl text-center lg:mb-14">
+      {
+        eyebrow && (
+          <div
+            class="flex items-center justify-center gap-3"
+            data-scroll-reveal="fade-up">
+            <span
+              class="bg-heat-accent h-1 w-8 rounded-full"
+              aria-hidden="true"
+            />
+            <p
+              class="text-primary text-base-sm font-semibold tracking-widest uppercase md:text-base"
+              set:html={markdownify(eyebrow)}
+            />
+          </div>
+        )
+      }
+      <h2
+        id="repair-vs-replacement-heading"
+        class:list={[eyebrow && "mt-4"]}
+        data-scroll-reveal="blur-up"
+        set:html={markdownify(title)}
+      />
+      {
+        description && (
+          <p
+            class="text-text-default leading-body mx-auto mt-5 max-w-3xl"
+            data-scroll-reveal="fade-up"
+            data-scroll-reveal-delay="100"
+            set:html={markdownify(description)}
+          />
+        )
+      }
+    </header>
+
+    <div class="grid items-stretch gap-6 md:grid-cols-2 lg:gap-8">
+      {
+        panels.map((panel) => {
+          const isRepair = panel.variant === "repair";
+
+          return (
+            <article
+              class:list={[
+                "comparison-panel relative isolate flex h-full flex-col overflow-hidden rounded-2xl border p-6 sm:p-8 lg:p-10",
+                isRepair
+                  ? "comparison-panel-repair border-white/10 bg-theme-dark text-white"
+                  : "comparison-panel-replace border-primary/20 bg-white",
+              ]}>
+              <div
+                class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+                aria-hidden="true">
+                {isRepair ? (
+                  <>
+                    <svg
+                      class="text-primary absolute -top-20 -right-24 size-96 opacity-20 blur-sm"
+                      viewBox="0 0 384 384"
+                      fill="none">
+                      <path
+                        d="M50 16c58 62 142 55 199 101 64 52 58 134 119 183"
+                        stroke="currentColor"
+                        stroke-width="74"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        d="M104-4c42 58 112 68 164 112 51 43 57 94 102 134"
+                        stroke="currentColor"
+                        stroke-width="18"
+                        stroke-linecap="round"
+                        opacity=".55"
+                      />
+                    </svg>
+                    <svg
+                      class="text-primary absolute -right-24 -bottom-32 size-96 opacity-15 blur-sm"
+                      viewBox="0 0 384 384"
+                      fill="none">
+                      <path
+                        d="M14 326c74-58 119-47 176-105 53-54 77-126 180-147"
+                        stroke="currentColor"
+                        stroke-width="82"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        d="M42 370c87-60 130-57 188-112 60-57 75-112 151-143"
+                        stroke="currentColor"
+                        stroke-width="16"
+                        stroke-linecap="round"
+                        opacity=".5"
+                      />
+                    </svg>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      class="text-primary-soft absolute -top-20 -right-24 size-96 opacity-70 blur-sm"
+                      viewBox="0 0 384 384"
+                      fill="none">
+                      <path
+                        d="M66 14c54 57 132 51 190 96 59 46 64 107 120 151"
+                        stroke="currentColor"
+                        stroke-width="62"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        d="M113-2c40 51 105 61 155 99 50 39 61 86 106 120"
+                        stroke="var(--color-primary)"
+                        stroke-width="10"
+                        stroke-linecap="round"
+                        opacity=".05"
+                      />
+                    </svg>
+                    <svg
+                      class="text-primary-soft absolute -right-24 -bottom-32 size-96 opacity-70 blur-sm"
+                      viewBox="0 0 384 384"
+                      fill="none">
+                      <path
+                        d="M24 338c74-54 118-45 173-99 53-51 73-114 179-143"
+                        stroke="currentColor"
+                        stroke-width="68"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        d="M55 374c84-56 127-55 188-108 57-49 77-101 136-128"
+                        stroke="var(--color-primary)"
+                        stroke-width="9"
+                        stroke-linecap="round"
+                        opacity=".05"
+                      />
+                    </svg>
+                  </>
+                )}
+              </div>
+
+              <header class="relative z-10 pb-7">
+                <p
+                  class:list={[
+                    "text-sm font-semibold tracking-widest uppercase",
+                    isRepair ? "text-heat-accent" : "text-primary",
+                  ]}
+                  set:html={markdownify(panel.label)}
+                />
+                <h3
+                  class:list={[
+                    "mt-3 text-h3-sm md:text-h3",
+                    isRepair ? "text-white" : "text-dark",
+                  ]}
+                  set:html={markdownify(panel.title)}
+                />
+                <p
+                  class:list={[
+                    "leading-body mt-4",
+                    isRepair ? "text-light" : "text-text-default",
+                  ]}
+                  set:html={markdownify(panel.description)}
+                />
+              </header>
+
+              <ul
+                class:list={[
+                  "relative z-10 flex flex-1 flex-col border-t",
+                  isRepair ? "border-white/15" : "border-border-light",
+                ]}
+                role="list">
+                {
+                  panel.features.map((feature, featureIndex) => (
+                    <li
+                      class:list={[
+                        "flex flex-1 items-start gap-4 py-5 lg:gap-5 lg:py-6",
+                        featureIndex < panel.features.length - 1 &&
+                          (isRepair
+                            ? "border-b border-white/15"
+                            : "border-border-light border-b"),
+                      ]}>
+                      <span
+                        class:list={[
+                          "flex size-15 shrink-0 items-center justify-center rounded-full xl:size-14",
+                          isRepair
+                            ? "border-primary/30 bg-primary/20 border text-white"
+                            : "border-primary/10 bg-primary-soft border text-dark",
+                        ]}>
+                        <svg
+                          class="size-8"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                          focusable="false">
+                          {
+                            (iconPaths[feature.icon] || []).map((path) => (
+                              <path d={path} />
+                            ))
+                          }
+                        </svg>
+                      </span>
+                      <div class="min-w-0 pt-1">
+                        <h4
+                          class:list={[
+                            "text-h5-sm md:text-h5",
+                            isRepair ? "text-white" : "text-dark",
+                          ]}
+                          set:html={markdownify(feature.title)}
+                        />
+                        <p
+                          class:list={[
+                            "leading-body mt-2 text-sm sm:text-base",
+                            isRepair ? "text-light" : "text-text-default",
+                          ]}
+                          set:html={markdownify(feature.description)}
+                        />
+                      </div>
+                    </li>
+                  ))
+                }
+              </ul>
+            </article>
+          );
+        })
+      }
+    </div>
+
+    <aside
+      class="border-primary/15 relative isolate mt-8 flex flex-col items-start gap-5 overflow-hidden rounded-xl border bg-white p-6 shadow-sm sm:p-8 lg:mt-10 lg:flex-row lg:items-center lg:gap-7"
+      aria-labelledby="repair-vs-replacement-recommendation-heading">
+      <div
+        class="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+        aria-hidden="true">
+        <svg
+          class="text-primary-soft absolute -bottom-12 -left-16 size-64 opacity-70 blur-sm lg:-bottom-16 lg:-left-20 lg:size-80"
+          viewBox="0 0 384 384"
+          fill="none">
+          <g transform="translate(384 0) scale(-1 1)">
+            <path
+              d="M24 338c74-54 118-45 173-99 53-51 73-114 179-143"
+              stroke="currentColor"
+              stroke-width="68"
+              stroke-linecap="round"
+            />
+            <path
+              d="M55 374c84-56 127-55 188-108 57-49 77-101 136-128"
+              stroke="var(--color-primary)"
+              stroke-width="9"
+              stroke-linecap="round"
+              opacity=".05"
+            />
+          </g>
+        </svg>
+        <svg
+          class="text-primary-soft absolute -top-12 -right-16 size-64 opacity-70 blur-sm lg:-top-16 lg:-right-20 lg:size-80"
+          viewBox="0 0 384 384"
+          fill="none">
+          <path
+            d="M66 14c54 57 132 51 190 96 59 46 64 107 120 151"
+            stroke="currentColor"
+            stroke-width="62"
+            stroke-linecap="round"
+          />
+          <path
+            d="M113-2c40 51 105 61 155 99 50 39 61 86 106 120"
+            stroke="var(--color-primary)"
+            stroke-width="10"
+            stroke-linecap="round"
+            opacity=".05"
+          />
+        </svg>
+      </div>
+
+      <span class="border-primary/20 bg-primary-soft text-dark relative z-10 hidden size-14 shrink-0 items-center justify-center rounded-full border md:flex">
+        <svg
+          class="size-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false">
+          {
+            Handshake.map(([, attributes]) => <path {...attributes} />)
+          }
+        </svg>
+      </span>
+
+      <div class="relative z-10 min-w-0 flex-1">
+        <p class="text-primary text-sm font-semibold tracking-widest uppercase">
+          {recommendation.eyebrow}
+        </p>
+        <h3
+          id="repair-vs-replacement-recommendation-heading"
+          class="mt-2 text-h5-sm md:text-h5"
+          set:html={markdownify(recommendation.title)}
+        />
+        <p
+          class="text-text-default leading-body mt-2 max-w-3xl"
+          set:html={markdownify(recommendation.description)}
+        />
+      </div>
+
+      <Button
+        {...recommendation.button}
+        class="recommendation-cta-button relative z-10 shrink-0"
+      />
+    </aside>
+  </div>
+</section>
+
+<style>
+  .comparison-panel-repair {
+    box-shadow:
+      0 3px 8px color-mix(in srgb, var(--color-dark) 12%, transparent),
+      0 0 28px color-mix(in srgb, var(--color-dark) 14%, transparent),
+      0 18px 40px -8px color-mix(in srgb, var(--color-dark) 22%, transparent);
+  }
+
+  .comparison-panel-replace {
+    box-shadow:
+      0 3px 8px color-mix(in srgb, var(--color-dark) 12%, transparent),
+      0 0 28px color-mix(in srgb, var(--color-dark) 14%, transparent),
+      0 18px 40px -8px color-mix(in srgb, var(--color-dark) 22%, transparent);
+  }
+</style>

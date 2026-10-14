@@ -1,0 +1,162 @@
+---
+import Icons from "@/helpers/Icons.astro";
+import { getLocaleUrlCTM, useTranslations } from "@/lib/utils/i18nUtils.ts";
+import { humanize } from "@/lib/utils/textConverter";
+
+type Props = {
+  content: {
+    title?: string;
+    image?: string;
+    breadcrumb?: boolean;
+    hiddenPaths?: string[];
+    currentBreadcrumbLabel?: string;
+  };
+  supportingText?: string;
+  trustSignals?: Array<{
+    icon: string;
+    label: string;
+  }>;
+};
+
+const { supportingText, trustSignals = [] } = Astro.props;
+const {
+  title,
+  hiddenPaths,
+  breadcrumb = true,
+  currentBreadcrumbLabel,
+} = Astro.props.content || {};
+const t = await useTranslations(Astro.currentLocale as string);
+
+const createBreadcrumbParts = (pathname: string) => {
+  let segments = pathname.split("/").filter((segment) => segment);
+
+  if (segments[0] === Astro.currentLocale) {
+    segments = segments.slice(1);
+  }
+
+  const breadcrumbParts: {
+    label: string;
+    href: string;
+    isCurrent: boolean;
+  }[] = [
+    {
+      label: t("common.home"),
+      href: getLocaleUrlCTM("/", Astro.currentLocale),
+      isCurrent: pathname === "/",
+    },
+  ];
+
+  segments.forEach((segment, index) => {
+    if (segment === "page") return;
+
+    const isCurrent = index === segments.length - 1;
+    const label =
+      (isCurrent && currentBreadcrumbLabel) ||
+      humanize(segment.replace(".html", "").replace(/[-_]/g, " ")) ||
+      "";
+    const href = getLocaleUrlCTM(
+      `/${segments.slice(0, index + 1).join("/")}`,
+      Astro.currentLocale,
+    );
+
+    breadcrumbParts.push({
+      label,
+      href: hiddenPaths?.includes(label) ? "" : href,
+      isCurrent,
+    });
+  });
+
+  return breadcrumbParts;
+};
+
+const breadcrumbParts = breadcrumb
+  ? createBreadcrumbParts(Astro.url.pathname)
+  : [];
+---
+
+<section
+  class:list={[
+    "page-header-gradient section-spacing-lg-vertical relative flex items-center overflow-hidden",
+  ]}>
+  <div
+    class="relative z-10 container flex flex-col items-center justify-center text-center"
+    data-scroll-reveal="blur-up">
+    {
+      title && (
+        <h1
+          class:list={[
+            "text-display-6 sm:text-display-5 text-white",
+            supportingText || trustSignals.length
+              ? "md:text-display-4 xl:text-display-3"
+              : "md:text-display-3",
+          ]}>
+          {humanize(title)}
+        </h1>
+      )
+    }
+    {
+      supportingText && (
+        <p class="text-light mx-auto mt-5 max-w-3xl text-base leading-relaxed md:text-lg">
+          {supportingText}
+        </p>
+      )
+    }
+    {
+      trustSignals.length > 0 && (
+        <ul
+          class="mt-6 grid w-full max-w-4xl grid-cols-2 gap-y-4 md:gap-x-4 lg:flex lg:flex-wrap lg:items-center lg:justify-center lg:gap-y-3"
+          aria-label="Service credentials">
+          {trustSignals.map((signal, index) => (
+            <li
+              class:list={[
+                "flex min-w-0 items-center justify-center gap-2 px-2 text-sm text-white/90 sm:px-4",
+                index % 2 === 1 && "border-s border-white/15",
+                index > 0 && "lg:border-s lg:border-white/15",
+              ]}>
+              <Icons
+                icon={signal.icon}
+                class="size-4 shrink-0 text-white"
+                stroke-width="1.8"
+              />
+              <span>{signal.label}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    {
+      breadcrumb && breadcrumbParts.length > 0 && (
+        <nav
+          class:list={[supportingText || trustSignals.length ? "mt-6" : "mt-3"]}
+          aria-label={t("aria.breadcrumb")}>
+          <ol
+            class="flex flex-wrap items-center justify-center gap-2"
+            role="list">
+            {breadcrumbParts.map((part, index) => (
+              <li class="flex items-center gap-2" role="listitem">
+                {index !== 0 && (
+                  <Icons
+                    icon="ChevronRight"
+                    class="size-5 text-white"
+                    stroke-width="1.8"
+                  />
+                )}
+                {part.href && !part.isCurrent ? (
+                  <a class="text-light hover:text-white" href={part.href}>
+                    {part.label}
+                  </a>
+                ) : (
+                  <span
+                    class:list={[part.isCurrent ? "text-white" : "text-light"]}
+                    aria-current={part.isCurrent ? "page" : undefined}>
+                    {part.label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+  </div>
+</section>

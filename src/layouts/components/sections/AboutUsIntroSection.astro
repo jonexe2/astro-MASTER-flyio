@@ -1,0 +1,43 @@
+---
+import type { z } from "astro/zod";
+import OptimizedImage from "@/components/utilities/OptimizedImage.astro";
+import type { aboutUsIntroSectionSchema } from "@/sections.schema";
+
+type AboutUsIntroContent = NonNullable<
+  z.infer<typeof aboutUsIntroSectionSchema>
+>;
+
+type Props = {
+  content: AboutUsIntroContent;
+};
+
+const { content } = Astro.props;
+const { enable = true, image, imageAlt, title, paragraphs } = content;
+
+if (!enable) {
+  return null;
+}
+---
+
+<section class="section-spacing-vertical">
+  <div class="container max-sm:px-6">
+    <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      <OptimizedImage
+        src={image}
+        alt={imageAlt}
+        width={900}
+        height={675}
+        widths={[540, 720, 900, 1200]}
+        sizes="(min-width: 1024px) 50vw, 100vw"
+        class="aspect-4/3 w-full rounded-2xl object-cover"
+      />
+
+      <div class="max-w-xl">
+        <h2>{title}</h2>
+        <div class="mt-6 space-y-4">
+          {paragraphs.map((paragraph) => <p class="text-lg">{paragraph}</p>)}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,135 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import Icons from "@/helpers/Icons.astro";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import type { serviceBenefitsSectionSchema } from "@/sections.schema";
+
+type ServiceBenefitsContent = Section &
+  NonNullable<z.infer<typeof serviceBenefitsSectionSchema>>;
+
+type Props = {
+  content?: ServiceBenefitsContent;
+};
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "hvac-installation-benefits-section",
+    Astro.currentLocale,
+  )
+)?.data as ServiceBenefitsContent;
+
+const actualContent = overrideObjects(
+  { ...defaultContent },
+  Astro.props.content || {},
+) as ServiceBenefitsContent;
+
+const {
+  enable = true,
+  eyebrow,
+  title,
+  description,
+  items = [],
+} = actualContent;
+
+if (!enable || !items.length) {
+  return null;
+}
+---
+
+<section
+  aria-labelledby="service-benefits-heading"
+  class="section-spacing-vertical bg-theme-dark relative isolate overflow-clip">
+  <Icons
+    icon="House"
+    class="pointer-events-none absolute -right-20 -bottom-20 -z-10 size-96 text-white/5 xl:size-96"
+    stroke-width="0.8"
+    aria-hidden="true"
+  />
+
+  <div class="container">
+    <div class="grid gap-12 lg:grid-cols-12 lg:gap-16 xl:gap-20">
+      <div
+        class="lg:sticky lg:top-32 lg:col-span-5 lg:self-start"
+        data-scroll-reveal="blur-up">
+        {
+          eyebrow && (
+            <div class="flex items-center gap-3">
+              <span
+                class="bg-heat-accent h-1 w-8 rounded-full"
+                aria-hidden="true"
+              />
+              <p
+                class="text-base-sm font-semibold tracking-widest text-white/85 uppercase md:text-base"
+                set:html={markdownify(eyebrow)}
+              />
+            </div>
+          )
+        }
+        {
+          title && (
+            <h2
+              id="service-benefits-heading"
+              class="mt-4 max-w-xl text-white"
+              set:html={markdownify(title)}
+            />
+          )
+        }
+        {
+          description && (
+            <p
+              class="leading-body mt-6 max-w-xl text-white/70"
+              set:html={markdownify(description)}
+            />
+          )
+        }
+      </div>
+
+      <div
+        class="space-y-5 lg:col-span-7"
+        data-scroll-reveal="fade-up"
+        data-scroll-reveal-delay="120">
+        {
+          items.map((item, index) => (
+            <article class="rounded-2xl border border-white/10 bg-white/5 p-7 shadow-lg shadow-black/10 lg:p-8">
+              <div class="flex items-center gap-3">
+                <span class="text-heat-accent text-sm font-semibold">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span class="bg-heat-accent h-px w-10" aria-hidden="true" />
+                {item.icon && (
+                  <Icons
+                    icon={item.icon}
+                    class="text-heat-accent size-6"
+                    stroke-width="1.7"
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+
+              <div class="mt-5 grid items-end gap-5 md:grid-cols-12 md:gap-8">
+                <h3
+                  class="text-display-6 md:text-display-5 lg:text-display-6 xl:text-display-5 text-white md:col-span-7"
+                  set:html={markdownify(item.statement || item.title)}
+                />
+                <div class="md:col-span-5 md:pb-1">
+                  <p
+                    class="text-lg font-semibold text-white"
+                    set:html={markdownify(item.title)}
+                  />
+                  <p
+                    class="leading-body mt-2 text-white/65"
+                    set:html={markdownify(item.description)}
+                  />
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

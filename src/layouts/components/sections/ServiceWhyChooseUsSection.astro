@@ -1,0 +1,67 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import { markdownify } from "@/lib/utils/textConverter";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import type { whyChooseUsSectionSchema } from "@/sections.schema";
+
+type ServiceWhyChooseUsContent = Section &
+  NonNullable<z.infer<typeof whyChooseUsSectionSchema>>;
+
+type Props = {
+  content?: ServiceWhyChooseUsContent;
+};
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "service-why-choose-us-section",
+    Astro.currentLocale,
+  )
+)?.data as ServiceWhyChooseUsContent;
+
+const actualContent = overrideObjects(
+  { ...defaultContent },
+  Astro.props.content || {},
+) as ServiceWhyChooseUsContent;
+
+const { enable = true, title, paragraphs = [] } = actualContent;
+const paragraphList = Array.isArray(paragraphs)
+  ? paragraphs.filter(Boolean)
+  : [];
+
+if (!enable) {
+  return null;
+}
+---
+
+<section
+  aria-labelledby="service-why-choose-us-heading"
+  class="section-spacing-vertical bg-theme-light">
+  <div class="container">
+    <div class="mx-auto max-w-4xl">
+      {
+        title && (
+          <h2
+            id="service-why-choose-us-heading"
+            class="text-center"
+            set:html={markdownify(title)}
+          />
+        )
+      }
+      {
+        paragraphList.length > 0 && (
+          <div class="mt-8 space-y-5">
+            {paragraphList.map((paragraph) => (
+              <p
+                class="text-text-default leading-body"
+                set:html={markdownify(paragraph)}
+              />
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>

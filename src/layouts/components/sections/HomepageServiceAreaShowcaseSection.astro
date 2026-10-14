@@ -1,0 +1,159 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import type { homepageServiceAreaShowcaseSectionSchema } from "@/sections.schema";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import DynamicIcon from "@/helpers/DynamicIcon.astro";
+
+type ShowcaseContent = Section &
+  NonNullable<z.infer<typeof homepageServiceAreaShowcaseSectionSchema>>;
+
+type Props = {
+  content?: ShowcaseContent;
+};
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "homepage-service-area-showcase-section",
+    Astro.currentLocale,
+  )
+)?.data as ShowcaseContent;
+
+const {
+  enable = true,
+  eyebrow,
+  title,
+  description,
+  trustCallout,
+  cityIcon,
+  cities = [],
+  mapLabel,
+  mapEmbedUrl,
+} = overrideObjects({ ...defaultContent }, Astro.props.content || {}) as ShowcaseContent;
+
+if (!enable) {
+  return null;
+}
+
+const cityColumns = [cities.slice(0, 6), cities.slice(6)];
+---
+
+<section
+  class="relative isolate bg-white pt-0! pb-16 lg:pb-24"
+  aria-labelledby="homepage-service-area-showcase-heading">
+  <div class="relative isolate pt-16 pb-44 md:pt-20 md:pb-52 xl:pt-24">
+    <!-- Two matching angular planes create the thin blue transition edge. -->
+    <div
+      class="showcase-field bg-primary pointer-events-none absolute inset-0 -z-20 translate-y-1.5"
+      aria-hidden="true"
+    />
+    <div
+      class="showcase-field bg-theme-dark pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      aria-hidden="true">
+      <svg
+        class="text-primary absolute -top-40 -left-48 w-240 max-w-none opacity-10"
+        viewBox="0 0 960 960"
+        fill="none">
+        <g stroke="currentColor" stroke-width="0.8" transform="rotate(-24 360 380)">
+          {Array.from({ length: 15 }, (_, index) => (
+            <ellipse cx="360" cy="380" rx={140 + index * 18} ry={190 + index * 22} />
+          ))}
+        </g>
+      </svg>
+    </div>
+
+    <div class="container">
+      <div class="grid gap-10 lg:grid-cols-11 lg:gap-16">
+        <div class="lg:col-span-5">
+          {eyebrow && (
+            <p
+              class="text-heat-accent text-sm font-semibold tracking-widest uppercase md:text-base"
+              set:html={markdownify(eyebrow)}
+            />
+          )}
+          <h2
+            id="homepage-service-area-showcase-heading"
+            class="mt-4 text-white xl:text-h1"
+            set:html={markdownify(title)}
+          />
+          <p
+            class="text-light leading-body mt-6 max-w-xl text-base lg:text-lg"
+            set:html={markdownify(description)}
+          />
+          <div class="mt-8 flex items-center gap-5 lg:mt-10">
+            <span class="border-primary flex size-14 shrink-0 items-center justify-center rounded-full border">
+              <DynamicIcon
+                name={trustCallout.icon}
+                class="text-heat-accent size-6"
+                aria-hidden="true"
+              />
+            </span>
+            <div class="border-white/10 border-l pl-5">
+              <p
+                class="font-semibold text-white"
+                set:html={markdownify(trustCallout.title)}
+              />
+              <p
+                class="text-light text-sm md:text-base"
+                set:html={markdownify(trustCallout.description)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-x-10 sm:grid-cols-2 lg:col-span-6 lg:pt-1">
+          {cityColumns.map((column) => (
+            <ul role="list">
+              {column.map((city) => (
+                <li class="flex items-center gap-4 border-b border-white/15 py-3.5">
+                  <DynamicIcon
+                    name={cityIcon}
+                    class="text-heat-accent size-5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span class="text-base font-medium text-white">{city}</span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container relative z-10 -mt-28 md:-mt-36">
+    <div class="showcase-map overflow-hidden rounded-xl">
+      <iframe
+        title={mapLabel}
+        src={mapEmbedUrl}
+        loading="lazy"
+        allowfullscreen
+        referrerpolicy="no-referrer-when-downgrade"
+        class="block h-80 w-full md:h-112 lg:h-128 xl:h-120"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .showcase-field {
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - 8rem),
+      82% 100%,
+      18% 100%,
+      0 calc(100% - 8rem)
+    );
+  }
+
+  .showcase-map {
+    box-shadow:
+      0 2px 6px color-mix(in srgb, var(--color-dark) 10%, transparent),
+      0 0 20px color-mix(in srgb, var(--color-dark) 11%, transparent),
+      0 14px 30px -10px color-mix(in srgb, var(--color-dark) 20%, transparent);
+  }
+</style>

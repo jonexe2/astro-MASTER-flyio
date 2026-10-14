@@ -1,0 +1,201 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import type { homeownerTrustSectionSchema } from "@/sections.schema";
+import { markdownify } from "@/lib/utils/textConverter";
+import OptimizedImage from "@/components/utilities/OptimizedImage.astro";
+
+type HomeownerTrustContent = Section &
+  NonNullable<z.infer<typeof homeownerTrustSectionSchema>>;
+
+type Props = {
+  content?: HomeownerTrustContent;
+};
+
+const {
+  enable = true,
+  eyebrow,
+  title,
+  description,
+  images = { large: "", small: "", largeAlt: "", smallAlt: "" },
+  features = [],
+} = (Astro.props.content || {}) as HomeownerTrustContent;
+
+if (!enable || !title || features.length !== 4) {
+  return null;
+}
+
+const featureIconPaths = [
+  [
+    "M16 4.25l2.15 1.36 2.53-.16.91 2.36 2.15 1.36-.77 2.42.77 2.42-2.15 1.36-.91 2.36-2.53-.16L16 18.97l-2.15-1.36-2.53.16-.91-2.36-2.15-1.36.77-2.42-.77-2.42 2.15-1.36.91-2.36 2.53.16L16 4.25Z",
+    "m12.75 11.7 2.05 2.05 4.45-4.55",
+    "m12.1 18.1-1.45 8.15L16 23.1l5.35 3.15-1.45-8.15",
+  ],
+  [
+    "M9 4.75h11.2l3.8 3.8v17.7H9V4.75Z",
+    "M20.2 4.75v4.1H24",
+    "M13 14.25h7",
+    "M13 18.25h3.5",
+    "M13 22.25h4",
+    "M21.2 17.75c-1.55 0-2.55.7-2.55 1.75s1 1.75 2.55 1.75 2.55.7 2.55 1.75-1 1.75-2.55 1.75m0-7.75v1.75m0 7v1.75",
+  ],
+  [
+    "M4.5 15.15 16 5.75l11.5 9.4",
+    "M7.5 13.05v13.2h17v-13.2",
+    "M16 22.75s-5-2.65-5-6.05c0-1.65 1.25-2.85 2.75-2.85 1.05 0 1.85.55 2.25 1.35.4-.8 1.2-1.35 2.25-1.35 1.5 0 2.75 1.2 2.75 2.85 0 3.4-5 6.05-5 6.05Z",
+  ],
+  [
+    "M16 3.75c3.25 2.15 6.35 3.1 9.4 3.25v7.15c0 6.15-3.75 10.95-9.4 14.1-5.65-3.15-9.4-7.95-9.4-14.1V7c3.05-.15 6.15-1.1 9.4-3.25Z",
+    "m11.25 15.85 3.15 3.15 6.45-6.65",
+  ],
+];
+---
+
+<section class="bg-white section-spacing-vertical overflow-hidden">
+  <div class="container">
+    <header class="mx-auto mb-14 max-w-4xl text-center lg:mb-16">
+      {
+        eyebrow && (
+          <div
+            class="flex items-center justify-center gap-3"
+            data-scroll-reveal="fade-up">
+            <span
+              class="bg-heat-accent h-1 w-8 rounded-full"
+              aria-hidden="true"
+            />
+            <p
+              class="text-primary text-base-sm font-semibold tracking-widest uppercase md:text-base"
+              set:html={markdownify(eyebrow)}
+            />
+          </div>
+        )
+      }
+      <h2
+        class:list={[eyebrow && "mt-4"]}
+        data-scroll-reveal="blur-up"
+        set:html={markdownify(title)}
+      />
+      {
+        description && (
+          <p
+            class="text-text-default leading-body mx-auto mt-5 max-w-2xl"
+            data-scroll-reveal="fade-up"
+            data-scroll-reveal-delay="100"
+            set:html={markdownify(description)}
+          />
+        )
+      }
+    </header>
+
+    <div class="grid place-items-center gap-16 lg:grid-cols-2 xl:gap-24">
+      <div
+        class="relative isolate z-0 w-full"
+        data-scroll-reveal="image-clip">
+        <svg class="absolute h-0 w-0" aria-hidden="true">
+          <clipPath
+            id="about-clip-path-1-x"
+            clipPathUnits="objectBoundingBox">
+            <path
+              d="M1,0.828 C1,0.845, 0.993,0.861, 0.981,0.872 L0.87,0.982 C0.858,0.993, 0.842,1, 0.825,1 H0.064 C0.029,1, 0,0.972, 0,0.938 V0.172 C0,0.155, 0.007,0.139, 0.019,0.128 L0.13,0.018 C0.142,0.007, 0.158,0, 0.175,0 H0.936 C0.971,0, 1,0.028, 1,0.063 V0.828 Z">
+            </path>
+          </clipPath>
+        </svg>
+
+        {
+          images.large && (
+            <div class="relative mr-auto h-125 w-4/5 rounded-4xl pb-14 sm:h-142 lg:w-[90%]">
+              <div class="clip-about-shape h-full w-full">
+                <OptimizedImage
+                  width={900}
+                  src={images.large}
+                  alt={images.largeAlt || "HVAC technician servicing residential equipment"}
+                  class="h-full w-full object-cover"
+                />
+              </div>
+
+              <OptimizedImage
+                class="pointer-events-none absolute top-20 -right-20 -z-10 rotate-180 select-none"
+                src="/images/banner-dots-dark.svg"
+              />
+              <OptimizedImage
+                class="pointer-events-none absolute top-36 -right-10 -z-10 select-none"
+                src="/images/banner-dots-dark.svg"
+              />
+            </div>
+          )
+        }
+
+        {
+          images.small && (
+            <>
+              <div class="clip-about-shape absolute right-0 bottom-0 h-1/2 w-7/12 scale-105 bg-white sm:bottom-0 sm:w-5/12" />
+              <div class="absolute right-0 bottom-0 h-1/2 w-7/12 rounded-4xl sm:w-5/12">
+                <div class="clip-about-shape h-full w-full">
+                  <OptimizedImage
+                    width={450}
+                    src={images.small}
+                    alt={images.smallAlt || "Homeowner adjusting a smart thermostat"}
+                    class="h-full w-full object-cover"
+                  />
+                </div>
+
+                <OptimizedImage
+                  class="pointer-events-none absolute bottom-0 -left-20 -z-10 select-none"
+                  src="/images/banner-dots-dark.svg"
+                />
+              </div>
+            </>
+          )
+        }
+
+        <OptimizedImage
+          src="/images/banner-dots.svg"
+          class="absolute -top-10 -left-10 -z-10 opacity-20"
+        />
+      </div>
+
+      <div
+        class="w-full"
+        data-scroll-reveal="fade-up"
+        data-scroll-reveal-delay="120">
+        {
+          features.map((feature, index) => (
+            <article
+              class:list={[
+                "flex items-start gap-5 py-6 sm:gap-6 lg:gap-7 lg:py-8",
+                index < features.length - 1 &&
+                  "border-border-light border-b",
+              ]}>
+              <span class="bg-dark flex size-12 shrink-0 items-center justify-center rounded-full text-white md:size-13">
+                <svg
+                  class="size-6"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.15"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  focusable="false">
+                  {
+                    featureIconPaths[index].map((path) => <path d={path} />)
+                  }
+                </svg>
+              </span>
+              <div class="min-w-0 flex-1 pt-1.5 lg:pt-2">
+                <h3
+                  class="text-h5-sm md:text-h5 text-dark"
+                  set:html={markdownify(feature.title)}
+                />
+                <p
+                  class="text-text-default leading-body mt-2 text-sm sm:text-base"
+                  set:html={markdownify(feature.description)}
+                />
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

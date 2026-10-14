@@ -1,0 +1,286 @@
+---
+import type { z } from "astro/zod";
+import type { Section } from "@/types";
+import Button from "@/components/Button.astro";
+import OptimizedImage from "@/components/utilities/OptimizedImage.astro";
+import Icons from "@/helpers/Icons.astro";
+import { getEntryCTM } from "@/lib/contentParser.astro";
+import { markdownify } from "@/lib/utils/textConverter";
+import overrideObjects from "@/lib/utils/overrideObjects.ts";
+import type { serviceOptionsSectionSchema } from "@/sections.schema";
+
+type ServiceOptionsContent = Section &
+  NonNullable<z.infer<typeof serviceOptionsSectionSchema>>;
+
+type Props = {
+  content?: ServiceOptionsContent;
+};
+
+const defaultContent = (
+  await getEntryCTM(
+    "sections",
+    "hvac-installation-options-section",
+    Astro.currentLocale,
+  )
+)?.data as ServiceOptionsContent;
+
+const actualContent = overrideObjects(
+  { ...defaultContent },
+  Astro.props.content || {},
+) as ServiceOptionsContent;
+
+const {
+  enable = true,
+  eyebrow,
+  title,
+  image,
+  imageAlt,
+  items = [],
+  button,
+} = actualContent;
+
+if (!enable || !items.length) {
+  return null;
+}
+---
+
+<section
+  aria-labelledby="service-options-heading"
+  class="section-spacing-vertical bg-body overflow-hidden">
+  <div class="container">
+    <div
+      class="service-selector grid min-w-0 gap-x-12 lg:grid-cols-12 xl:gap-x-16"
+      data-service-selector>
+      <div
+        class="order-1 lg:col-span-6 lg:col-start-7 lg:row-start-1"
+        data-scroll-reveal="blur-up">
+        {
+          eyebrow && (
+            <div class="flex items-center gap-3">
+              <span
+                class="bg-heat-accent h-1 w-8 rounded-full"
+                aria-hidden="true"
+              />
+              <p
+                class="text-primary text-base-sm font-semibold tracking-widest uppercase md:text-base"
+                set:html={markdownify(eyebrow)}
+              />
+            </div>
+          )
+        }
+        {
+          title && (
+            <h2
+              id="service-options-heading"
+              class="mt-3 max-w-3xl"
+              set:html={markdownify(title)}
+            />
+          )
+        }
+      </div>
+
+      {
+        image && (
+          <div
+            class="relative order-2 mt-10 overflow-hidden rounded-2xl md:mt-12 lg:col-span-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:mt-9 lg:mb-24 lg:min-h-96"
+            data-scroll-reveal="fade-up"
+            data-scroll-reveal-delay="160">
+            <OptimizedImage
+              src={image}
+              alt={imageAlt || "HVAC technician inspecting an outdoor system"}
+              width={900}
+              height={1125}
+              widths={[540, 720, 900, 1080]}
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              quality={82}
+              class="aspect-4/3 w-full object-cover lg:absolute lg:inset-0 lg:h-full lg:min-h-0"
+            />
+          </div>
+        )
+      }
+
+      <div
+        class="order-3 mt-8 min-w-0 lg:col-span-6 lg:col-start-7 lg:row-start-2 lg:mt-12"
+        data-scroll-reveal="fade-up"
+        data-scroll-reveal-delay="160">
+        <div
+          class="border-border-light flex w-full min-w-0 overflow-x-auto border-b"
+          role="tablist"
+          aria-label="HVAC system options"
+          aria-orientation="horizontal">
+          {
+            items.map((item, index) => (
+              <button
+                id={`service-option-tab-${index}`}
+                class="service-tab text-text-default aria-selected:text-heat-accent focus-visible:outline-primary text-h5-sm md:text-h5 relative min-w-24 flex-1 pb-4 text-center font-semibold focus-visible:outline-2 focus-visible:outline-offset-4"
+                type="button"
+                role="tab"
+                aria-selected={index === 0 ? "true" : "false"}
+                aria-controls={`service-option-panel-${index}`}
+                tabindex={index === 0 ? 0 : -1}
+                data-service-tab>
+                {item.tabLabel || item.title}
+                <span
+                  class="service-tab-indicator bg-heat-accent absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300"
+                  aria-hidden="true"
+                />
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="mt-6 min-w-0 lg:mt-5 lg:min-h-112">
+          {
+            items.map((item, index) => (
+              <article
+                id={`service-option-panel-${index}`}
+                class="service-option-panel lg:flex lg:min-h-112 lg:flex-col"
+                role="tabpanel"
+                tabindex="0"
+                aria-labelledby={`service-option-tab-${index}`}
+                data-service-panel>
+                <h3 class="text-lg" set:html={markdownify(item.title)} />
+                <p
+                  class="text-text-default leading-body mt-4 max-w-2xl"
+                  set:html={markdownify(item.description)}
+                />
+
+                {item.bestFor && (
+                  <div class="mt-6">
+                    <p class="text-primary text-sm font-semibold tracking-widest uppercase">
+                      Best For
+                    </p>
+                    <p
+                      class="text-dark mt-1"
+                      set:html={markdownify(item.bestFor)}
+                    />
+                  </div>
+                )}
+
+                {item.highlights && item.highlights.length > 0 && (
+                  <ul class="mt-7 grid gap-3 sm:grid-cols-2" role="list">
+                    {item.highlights.map((highlight) => (
+                      <li class="text-dark flex items-start gap-3 font-medium">
+                        <Icons
+                          icon="CircleCheckBig"
+                          class="text-heat-accent mt-0.5 size-7 shrink-0"
+                          stroke-width="2"
+                          aria-hidden="true"
+                        />
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {button && (
+                  <div class="mt-8 w-fit lg:mt-auto lg:pt-8">
+                    <Button {...button} />
+                  </div>
+                )}
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const initializeServiceSelectors = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-service-selector]")
+      .forEach((selector) => {
+        if (selector.dataset.initialized === "true") return;
+
+        const tabs = Array.from(
+          selector.querySelectorAll<HTMLButtonElement>("[data-service-tab]"),
+        );
+        const panels = Array.from(
+          selector.querySelectorAll<HTMLElement>("[data-service-panel]"),
+        );
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+        const activateTab = (
+          nextTab: HTMLButtonElement,
+          shouldFocus = true,
+        ) => {
+          const panelId = nextTab.getAttribute("aria-controls");
+
+          tabs.forEach((tab) => {
+            const isActive = tab === nextTab;
+            tab.setAttribute("aria-selected", String(isActive));
+            tab.tabIndex = isActive ? 0 : -1;
+          });
+
+          panels.forEach((panel) => {
+            panel.hidden = panel.id !== panelId;
+          });
+
+          const activePanel = panels.find((panel) => panel.id === panelId);
+
+          if (!reduceMotion) {
+            activePanel?.animate(
+              [
+                { opacity: 0.35, transform: "translateY(8px)" },
+                { opacity: 1, transform: "translateY(0)" },
+              ],
+              { duration: 220, easing: "ease-out" },
+            );
+          }
+
+          if (shouldFocus) {
+            nextTab.focus();
+            nextTab.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "nearest",
+            });
+          }
+        };
+
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => activateTab(tab, false));
+          tab.addEventListener("keydown", (event) => {
+            const currentIndex = tabs.indexOf(tab);
+            let nextIndex = currentIndex;
+
+            if (event.key === "ArrowRight") {
+              nextIndex = (currentIndex + 1) % tabs.length;
+            } else if (event.key === "ArrowLeft") {
+              nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            } else if (event.key === "Home") {
+              nextIndex = 0;
+            } else if (event.key === "End") {
+              nextIndex = tabs.length - 1;
+            } else {
+              return;
+            }
+
+            event.preventDefault();
+            activateTab(tabs[nextIndex]);
+          });
+        });
+
+        const initialTab =
+          tabs.find((tab) => tab.getAttribute("aria-selected") === "true") ||
+          tabs[0];
+        if (initialTab) activateTab(initialTab, false);
+
+        selector.dataset.initialized = "true";
+        selector.dataset.tabsReady = "true";
+      });
+  };
+
+  initializeServiceSelectors();
+  document.addEventListener("astro:page-load", initializeServiceSelectors);
+</script>
+
+<style>
+  .service-tab[aria-selected="true"] .service-tab-indicator {
+    width: 100%;
+  }
+</style>

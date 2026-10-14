@@ -1,0 +1,28 @@
+---
+import Base from "@/layouts/Base.astro";
+import ContactSectionTwo from "@/components/sections/ContactSectionTwo.astro";
+import ContactMapSection from "@/components/sections/ContactMapSection.astro";
+import PageHeader from "@/components/widgets/PageHeader.astro";
+import { generatePaths } from "@/lib/utils/i18nUtils.ts";
+
+export function getStaticPaths() {
+  return generatePaths();
+}
+
+const pageTitle = "Contact Us";
+const metaDescription =
+  "Contact our HVAC team about residential heating, cooling, maintenance, and indoor air quality services.";
+---
+
+<Base
+  metaTitle={pageTitle}
+  metaDescription={metaDescription}
+  fitToScreen={false}
+  hasFooterDarkBackground
+  hideCallToAction>
+  <PageHeader
+    content={{ title: pageTitle, currentBreadcrumbLabel: pageTitle }}
+  />
+  <ContactSectionTwo hasSectionSpacing={false} />
+  <ContactMapSection />
+</Base>
