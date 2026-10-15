@@ -7,8 +7,8 @@
 **Plan created:** October 13, 2026  
 **Assessment basis:** Working repository `main` tree at `3dac95ba0467d6e2339b98d5c7c71460e948c022` (checked October 13, 2026), selected source files including the hero trust banner and testimonial content, plus the earlier original-repository assessment and project requirements. *(Historical, as of 2026-10-13: local build/browser behavior was untested at that time. It was tested on 2026-10-14; see Section 10.1.)*  
 **Project status:** Planning; feature implementation has not started in this plan.  
-**Current phase:** Phase 0 in `astro-MASTER-flyio`; P0.1, P0.2 and P0.3 are complete (Section 10.2 holds the P0.2 inventory). P0.4 (first decisions) remains open: some decisions are approved (2026-10-14), others are not.  
-**Next recommended task:** P0.4, resolve the remaining first decisions (listed under Pending approvals in Working notes) with owner approval. **Astro security findings (Section 10.1) must be reviewed and remediated before any server-side functionality (Phase 1 onward) is enabled or anything is deployed to production.**  
+**Current phase:** Phase 0 is complete (P0.1 to P0.4, 2026-10-14); Phase 1 has not started. The first approved task is P1.1a (dependency security upgrade on a dedicated branch); the exact package changes and test plan need owner approval before any dependency is changed.  
+**Next recommended task:** present the exact P1.1a package/version changes and test plan (Section 10.3-D) for owner approval, then implement P1.1a on a dedicated branch. **Astro security findings (Section 10.1) must be reviewed and remediated before any server-side functionality (Phase 1 onward) is enabled or anything is deployed to production.**  
 **Scope of this document:** Development roadmap and progress tracker. This revision only updates the plan, not repository code or deployments. The original repository is not to be modified.
 
 > **How to use this plan:** Work through one small task at a time. A checked box (`- [x]`) means the action was actually performed and verified. An unchecked box (`- [ ]`) means it is still pending. An existing file is not proof a feature works. After each development session, update the status table, completed checklist items, test evidence, blockers, and next task. Do not check off untested work.
@@ -107,19 +107,21 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 - The same website should work on desktop, tablet and mobile.
 - Visitors do **not** create accounts.
 
-### Private owner area (proposed URLs, subject to route inspection)
+### Private owner area (approved target routes, 2026-10-14)
 
 | URL | Purpose | Access |
 |---|---|---|
 | `/owner/login/` | One-owner sign-in | Public page; no lead data visible |
-| `/owner/` | Lead counts and recent inquiries | Signed-in owner only |
-| `/owner/leads/` | Searchable/filterable lead list | Signed-in owner only |
-| `/owner/leads/[id]/` | Dedicated lead detail view | Signed-in owner only |
-| `/owner/settings/` | Only if required for basic owner settings | Deferred unless needed |
+| `/owner/` | Dashboard overview: all-time, today and this-month lead counts plus recent inquiries | Signed-in owner only |
+| `/owner/leads/` | Leads inbox: view and search inquiries | Signed-in owner only |
+| `/owner/leads/[id]/` | Individual lead details (read-only) | Signed-in owner only |
+| `/owner/settings/` | **Not in V1** (owner decision 2026-10-14) | n/a |
 
-These routes are **proposals, not confirmed existing files**. Validate how they coexist with the current `src/pages/[...lang]/` routes, trailing slash, sitemap, and static/on-demand rendering rules before creating them. Prefer a dedicated private layout rather than automatically displaying public website navigation and footer in the owner area.
+These four routes are **approved target routes (owner decision 2026-10-14), not existing files.** Their compatibility with the current `src/pages/[...lang]/` routes, trailing slash, sitemap, and static/on-demand rendering rules, and their actual functionality, must still be verified during implementation (the P1.1b test route is the first check; Section 10.3-B). Prefer a dedicated private layout rather than automatically displaying public website navigation and footer in the owner area. The exact logout implementation is decided in the authentication phase (P4.1).
 
-**Recommended first dashboard features:** total leads, leads received this month, leads received today, newest inquiries, name/phone/email/service/source/date, search, basic date filtering, and a full detail page. **Lead status (New / Contacted / Closed):** decide at Phase 2; useful for small offices, but add it only if the owner will use it. CSV export is optional after core features work. No advanced reports or charts.
+**Owner decision (2026-10-14):** the approved flow is **Owner Login, Dashboard Overview, Leads Inbox, Individual Lead Details**. Overview: all-time, today and this-month lead counts plus recent inquiries. Leads Inbox: view and search inquiries. Lead Details: customer contact information, requested services, message (when provided) and submission date. Keep it simple and secure. Leads are **read-only in V1: no lead statuses and no editing; this is not a CRM.** The four URLs in the table above were **approved on 2026-10-14** as target routes (compatibility and functionality still to be verified during implementation). There is no settings page, no lead status and no lead source tracking in V1.
+
+**Recommended first dashboard features:** total leads, leads received this month, leads received today, newest inquiries, name/phone/email/service/date, search, and a full detail page (basic date filtering is optional and not part of the approved flow; confirm later). **Lead status (New / Contacted / Closed): not in V1 (owner decision 2026-10-14); the dashboard is read-only lead viewing, not a CRM.** CSV export is optional after core features work. No advanced reports or charts.
 
 ### What happens when a customer submits
 
@@ -169,7 +171,7 @@ No database schema has been created or approved yet. These are **conceptual tabl
 
 | Proposed table | What it contains | Essential for V1? | Notes |
 |---|---|---|---|
-| `leads` | One customer request per record. Stable ID, contact fields, requested services, message, source page, timestamps, optional lead status. | **Yes** | Primary record; exact fields based on the approved forms. |
+| `leads` | One customer request per record. Stable ID, contact fields, requested services, message, timestamps. No lead status and no source tracking in V1 (owner decisions 2026-10-14). | **Yes** | Primary record; exact fields based on the approved forms. |
 | `integration_jobs` | Tasks to email the owner or sync a lead; task type, related lead ID, state, attempts, next try time and error summary. | **Yes, if using the recommended retry design** | Avoids losing follow-up work on a crash. Could use a simpler equivalent if justified. |
 | `owner_accounts` or approved login storage | Owner identity, password verification material if applicable, account metadata. | **Needed somewhere**, not necessarily as a custom table | Depends on approved authentication implementation. Never store plaintext passwords. |
 | `sessions` or approved session storage | Tracks authorized logins if the selected login approach needs database-backed sessions. | **Conditional** | Do not create a redundant table when the chosen mechanism handles this safely. |
@@ -179,11 +181,11 @@ No database schema has been created or approved yet. These are **conceptual tabl
 
 - Assign a **stable, unique, nonreused lead ID** at creation. Recommendation: a generated string ID (for example, a UUID), which is easier to preserve during imports than relying on a newly generated row number. Final choice requires approval.
 - Save server-generated `created_at` and `updated_at` timestamps in an agreed UTC-based format; display local time in the dashboard. Do not accept the browser's claimed submit time as authoritative.
-- Store the actual normalized source path/page. Validate it instead of blindly trusting hidden form fields.
+- *(Removed from V1, owner decision 2026-10-14: no lead source tracking, so no source, page or referral value is stored, validated or shown.)*
 - Store service selection consistently (including multiple services if the hero form keeps multi-select). Choose one documented format, not an ad hoc mix of strings.
 - Define what “not provided” versus a deliberately blank value means for each optional field; preserve that distinction through exports.
 - Limit request field length and data collected to what is necessary. Decide retention and deletion policy before launch.
-- If a lead status exists, default it sensibly, track the current value, and keep edits synchronized to Sheets; do not let imports reset it to “new.”
+- *(Deferred, not V1: lead status was removed from V1 on 2026-10-14; this rule applies only if statuses are added later.)* If a lead status exists, default it sensibly, track the current value, and keep edits synchronized to Sheets; do not let imports reset it to “new.”
 - Keep notification state and Google synchronization state **outside the recoverable customer lead fields** unless the approved design explicitly requires otherwise. Recovery from Sheets will restore leads, not necessarily integration task history.
 
 ### 4.3 Suggested form-field decisions (not yet final)
@@ -192,13 +194,13 @@ No database schema has been created or approved yet. These are **conceptual tabl
 |---|---|---|
 | Full name | Required | Know who is requesting service. |
 | Phone | Required | Easy call-back for HVAC jobs. |
-| Email | Optional unless owner prefers mandatory. *(Owner decision 2026-10-14: **required on the approved longer form**; the hero form's final email requirement remains undecided.)* | Allow callers who prefer the phone; validate it if given. |
+| Email | **Required on both approved forms** (owner decision 2026-10-14) | Needed for follow-up; validate the format. |
 | Requested service(s) | Required | Distinguish repair, installation, emergency, etc. |
 | Service address or city/ZIP | Consider optional at intake; decide before release | Helps qualify service area without creating unnecessary friction. |
 | Problem description | Optional, with length limit | Gives context for the owner. |
 | Preferred contact time | Optional | Helpful but not essential. |
 | Consent/permission notice | Match real data-use requirements and approved copy | Avoid false privacy/security promises. |
-| Source page | Set/validate through the application | Support lead-source reporting. |
+| Source page | **Not collected in V1** (owner decision 2026-10-14: no lead source tracking) | Keeps the forms and the lead record simple. |
 | Received timestamp + lead ID | Set on server | Reliable records and recovery. |
 
 **Important existing-form difference:** The hero currently asks for name/phone/email/multiple services. The general form has a different IT-focused field set. Phase 3 must decide whether both forms show the same inputs or map two supported layouts into one consistent lead record. Do not silently discard information that users provided.
@@ -206,9 +208,12 @@ No database schema has been created or approved yet. These are **conceptual tabl
 **Owner decisions, 2026-10-14 (approved requirements for future implementation; no form has been changed yet):**
 
 - **Both homepage forms stay**, with their existing placements and visual designs: the short hero form for immediate lead capture, and the longer form farther down the homepage (also used on the Contact Us page) as a second chance to capture leads. Both will connect to the same backend and SQLite database even though they collect different amounts of information.
-- **Longer form: approved fields** (to be built in P3.3). (1) **Full Name**, required, one field (not separate first/last). (2) **Phone Number**, required. (3) **Email Address**, required on this longer form (the hero form's final email requirement is still undecided). (4) **HVAC Services**, required, using the same six service options and the same multi-select behaviour as the hero form; at least one service must be selected. (5) **Message**, optional text box for describing the HVAC issue or asking a question. (6) **Honeypot**, a hidden anti-spam field that must not interfere with legitimate customers (hidden from sight and assistive technology, no autofill triggers) and must be verified on the server when implemented; it must not be the only spam defense (server validation and rate limiting in P3.1 also apply).
+- **Hero form (decided 2026-10-14):** preserve its existing fields and multi-select design. **Full Name, Phone, Email and HVAC Services remain required.** Add a hidden honeypot when the form backend is implemented; the honeypot is validated on the server and must not interfere with legitimate submissions (and, as for the longer form, is not the only spam defense).
+- **Navigation (decided 2026-10-14):** homepage HVAC service cards and buttons link to their respective existing service pages, not `/#contact` (verified: the six cards already do; Section 10.3-A). Request/Schedule buttons **inside** the individual HVAC service pages link to `/contact-us/` instead of `/#contact`. The Contact Us page uses the approved longer form, and both homepage forms stay. **Lead source tracking is not part of V1** (see the next bullet).
+- **Lead source tracking: REJECTED for V1 (owner decision 2026-10-14).** No `?source=` parameters on service-page links, no hidden tracking identifiers, no referral or source attribution logic, and no source column or dashboard feature. Every approved form still saves its lead to the same SQLite database; routing and form functionality are otherwise unchanged. The only hidden form field is the honeypot.
+- **Longer form: approved fields** (to be built in P3.3). (1) **Full Name**, required, one field (not separate first/last). (2) **Phone Number**, required. (3) **Email Address**, required on this longer form (the hero form's email is also required). (4) **HVAC Services**, required, using the same six service options and the same multi-select behaviour as the hero form; at least one service must be selected. (5) **Message**, optional text box for describing the HVAC issue or asking a question. (6) **Honeypot**, a hidden anti-spam field that must not interfere with legitimate customers (hidden from sight and assistive technology, no autofill triggers) and must be verified on the server when implemented; it must not be the only spam defense (server validation and rate limiting in P3.1 also apply).
 - The outdated IT questions on the longer form (budget, start date, project type, preferred contact, IT service list) will be replaced in P3.3. Do not change either form before then.
-- **Still open (P0.4 / P2.1):** the hero form's own field rules (its email is required in the current code) and whether it also gets a honeypot; the exact stored lead record (both forms must map to one record, with Message empty or "not provided" for the hero form); and where the service-page request buttons point.
+- **Open (P2.1 only):** the exact stored lead record (both forms must map to one record, with Message empty or "not provided" for the hero form, and an agreed way to store the selected services) is frozen in P2.1. The other `/#contact` buttons on the site (footer, banners and similar) **stay unchanged for now** (owner decision 2026-10-14).
 
 ### 4.4 Recovery contract: SQLite ↔ Google Sheets
 
@@ -216,7 +221,7 @@ The Google Sheet is **not** a complete database backup. For lead recovery, howev
 
 The mapping must explicitly cover:
 
-- Every recoverable `leads` field, including original ID, timestamps, customer details, service(s), request text, source and current status if supported.
+- Every recoverable `leads` field, including original ID, timestamps, customer details, service(s), request text (no status and no source field in V1).
 - Exactly how empty text, missing values, and database `NULL` values round-trip without becoming indistinguishable.
 - UTC and dashboard timezone conversion without rewriting the stored original time.
 - Leading zeros in phone numbers and identifiers; strings that look like dates/numbers; long messages and characters Sheets may interpret specially.
@@ -293,13 +298,13 @@ The mapping must explicitly cover:
 **Files:** This plan only during the decision step.
 
 - [x] Confirm the master template retains **`5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and all existing testimonials** as editable demo content.
-- [ ] Approve the intended master demo brand and which additional template details need cleanup **without removing preserved trust/testimonial elements**. Decide real-client brand facts separately when a client is onboarded. *(Partly decided 2026-10-14: **"BlueFlame Heating & Air" is the approved placeholder HVAC business name for the reusable master**; keep the existing BlueFlame content and do not rename, remove or rewrite it. Still open: which other template details (IT titles/metadata, demo domain, footer, blog, contact details and similar) to clean up. Left unchecked.)*
-- [ ] Approve proposed core lead fields and whether “New / Contacted / Closed” belongs in V1.
-- [ ] Agree the planned private `/owner/` route family after checking existing routing.
-- [ ] Review local-development permissions, GitHub branch workflow, and safe rollback checkpoint.
-- [ ] Choose the first coding task from Phase 1 and document any remaining blockers.
+- [x] Approve the intended master demo brand and which additional template details need cleanup **without removing preserved trust/testimonial elements**. Decide real-client brand facts separately when a client is onboarded. *(Decided 2026-10-14: **"BlueFlame Heating & Air" is the approved placeholder HVAC business name for the reusable master**; keep the existing BlueFlame content and do not rename, remove or rewrite it. **Template cleanup approved for later implementation (nothing was changed now):** replace unrelated Techlo/IT wording, inappropriate demo contact details, metadata and other leftover IT-template content with suitable HVAC demo content, while preserving "BlueFlame Heating & Air", the master trust indicators and all existing testimonial content and design. The inventory is in Section 10.2-G; the work is tracked in P3.3 (form copy), P9.4 and P10.1 and is not yet scheduled.)*
+- [x] Approve proposed core lead fields and whether “New / Contacted / Closed” belongs in V1. *(Decided 2026-10-14: both forms' fields are approved, Section 4.3: hero = Full Name, Phone, Email, HVAC Services all required plus a hidden honeypot added with the backend; longer form = Full Name, Phone, Email, HVAC Services required, optional Message, hidden honeypot. **New / Contacted / Closed statuses are NOT in V1** (read-only lead viewing, not a CRM). The exact stored lead record, ID and timestamps are still frozen in P2.1.)*
+- [x] Agree the planned private `/owner/` route family after checking existing routing. *(Approved 2026-10-14: `/owner/login/`, `/owner/`, `/owner/leads/`, `/owner/leads/[id]/`; read-only V1 with no settings page, lead statuses or source tracking. Existing routing was inspected (Section 10.3-B): nothing collides today. Actual compatibility and functionality must still be verified during implementation (first in P1.1b). Logout is decided in P4.1.)*
+- [x] Review local-development permissions, GitHub branch workflow, and safe rollback checkpoint. *(Reviewed and approved 2026-10-14: workflow and rollback in Section 9; local permissions reviewed read-only (git-ignored `.claude/settings.local.json`, with a recommendation to remove the standing push and `gh api` approvals, not applied). No branch, worktree, tag or GitHub setting has been created or changed. GitHub-side checks remain optional owner follow-ups listed under Blockers.)*
+- [x] Choose the first coding task from Phase 1 and document any remaining blockers. *(Chosen 2026-10-14: P1.1a, dependency security upgrades only, on a dedicated branch (Section 10.3-D). Remaining gate: the exact package/version changes and test plan need owner approval before any dependency is changed.)*
 
-**Verify/done when:** Necessary Phase 1 choices are explicit, not left for a coding agent to invent, and protected master trust/testimonial content is documented.
+**Verify/done when:** Necessary Phase 1 choices are explicit, not left for a coding agent to invent, and protected master trust/testimonial content is documented. **Status: complete (2026-10-14).** Every item is checked with a recorded owner decision. Follow-up gates that are not P0.4 blockers: owner approval of the exact P1.1a package changes, and the optional GitHub-side checks.
 
 ---
 
@@ -317,7 +322,7 @@ The mapping must explicitly cover:
 - [ ] Review current Astro and Node adapter documentation matching the installed versions.
 - [ ] Recommend the official Node adapter for the planned Node/Docker runtime unless inspection shows a better fit.
 - [ ] Compare keeping existing pages pre-rendered with making only private/API pages run on demand; prefer selective on-demand routes if practical.
-- [ ] Implement the approved adapter change in a focused branch; avoid unrelated frontend changes.
+- [ ] Implement the approved adapter change in a focused branch; avoid unrelated frontend changes. *Approved split (owner decision 2026-10-14; Section 10.3-D): first P1.1a, the dependency security upgrade alone; then P1.1b, the adapter. With `@astrojs/node` the static files move to `dist/client`, so `scripts/remove-draft-from-sitemap.mjs` (hard-coded `dist`) needs updating and the old Netlify/Vercel/Cloudflare configs would no longer match.*
 - [ ] Add a tiny harmless server response for testing (no private data), then call it locally.
 - [ ] Re-run the public-page build and confirm homepage, service routes, i18n rules and sitemap remain correct.
 
@@ -360,10 +365,10 @@ The mapping must explicitly cover:
 **Objective:** Define exactly what one lead means.  
 **Files:** Source form content/config files listed in P0.2; **proposed** schema/mapping documentation near backend code.
 
-- [ ] Compare all live form fields and approve required/optional V1 lead fields. *(Input: the owner approved the longer contact form's fields on 2026-10-14; see Section 4.3. Hero-form rules remain open.)*
+- [ ] Compare all live form fields and approve required/optional V1 lead fields. *(Input: the owner approved the longer contact form's fields on 2026-10-14; see Section 4.3. The hero form's fields are also approved: Full Name, Phone, Email and HVAC Services required, plus a hidden server-validated honeypot.)*
 - [ ] Approve canonical field names, data types, limits, how multi-select services are stored, and sensible default/empty values.
 - [ ] Choose a stable lead ID format and store the generated ID without changing it later.
-- [ ] Define timestamps (server-created UTC, original value maintained; optional last-modified time), source pages and optional status.
+- [ ] Define timestamps (server-created UTC, original value maintained; optional last-modified time); no lead status and no source tracking in V1.
 - [ ] Define how two rapid clicks, network retries and resubmission of the same request will be treated. Do not treat two genuinely separate inquiries as duplicates automatically.
 - [ ] Specify the Sheet column mapping and null/empty encoding **from the approved schema**, even before the Sheets API is connected.
 
@@ -426,8 +431,8 @@ The mapping must explicitly cover:
 
 - [ ] Agree input names and service encoding with both existing form components.
 - [ ] Accept only supported form fields and enforce required values, types, size limits and allowed service choices **on the server**.
-- [ ] Normalize/sanitize user input as appropriate; do not trust a hidden page/source field without checking it.
-- [ ] Add an appropriate simple spam/abuse defense and sensible submission rate limiting; do not make the public site hard to use. *Owner-approved requirement (2026-10-14): the longer form will include a hidden honeypot field; verify it on the server, make sure it never blocks legitimate customers, and do not rely on it as the only defense.*
+- [ ] Normalize/sanitize user input as appropriate; do not trust any hidden field without checking it (V1 has no source or page-tracking field; the only hidden field is the honeypot).
+- [ ] Add an appropriate simple spam/abuse defense and sensible submission rate limiting; do not make the public site hard to use. *Owner-approved requirement (2026-10-14): both the hero form and the longer form will include a hidden honeypot field; verify it on the server, make sure it never blocks legitimate customers, and do not rely on it as the only defense.* Also decide how the endpoint checks the request origin: Astro's `checkOrigin` does not reject cross-origin JSON requests (Section 10.3-D).
 - [ ] Save valid leads through P2.3 and return a safe success with ID; reject invalid/malicious requests without inserting leads.
 - [ ] Return safe, usable error responses. Prevent accidental exposure of exception details, credentials and other leads.
 - [ ] Test direct requests that bypass browser validation, including repeated requests and large invalid values.
@@ -439,12 +444,12 @@ The mapping must explicitly cover:
 **Files:** `src/layouts/components/widgets/AlternativeHeroForm.astro`, `src/content/sections/english/alternative-hero-section.md`, possibly `FormHandle.ts`.
 
 - [ ] Inspect current submit handlers, service multi-select, required attributes, loading/success/error messages and reset behavior.
-- [ ] Change only the submission route/logic needed to use P3.1; retain layout, controls, colors, keyboard behavior, **hero review/license badges, and adjacent testimonial sections**.
+- [ ] Change only the submission route/logic needed to use P3.1; retain layout, controls, colors, keyboard behavior, **hero review/license badges, and adjacent testimonial sections**. *(Owner decision 2026-10-14: keep the hero form's fields and multi-select design; Full Name, Phone, Email and HVAC Services stay required; add a hidden honeypot with the backend, verified on the server and never blocking legitimate submissions.)*
 - [ ] Map name, phone, email and selected services to approved backend fields, including multiple services when allowed.
 - [ ] Prevent duplicate requests from a double click or an uncertain network retry using the approved approach.
 - [ ] Show success **only after** confirmed SQLite save; keep user-entered content available on error when appropriate.
 - [ ] Test valid, missing name/phone, no service selected, invalid email and server-down cases.
-- [ ] Verify the saved lead/source in SQLite and check hero on desktop/mobile/tablet.
+- [ ] Verify the saved lead in SQLite and check hero on desktop/mobile/tablet.
 
 **Verify/done when:** Homepage hero submits real sample leads to SQLite, handles errors truthfully, and retains its approved visual design.
 
@@ -455,7 +460,7 @@ The mapping must explicitly cover:
 - [ ] Approve the HVAC question labels and inputs; remove irrelevant budget, project type and web/cloud service choices from the form content. *(Inputs approved 2026-10-14: Full Name (required), Phone Number (required), Email Address (required), HVAC Services (required; same six options and multi-select as the hero; at least one), optional Message, hidden honeypot; see Section 4.3. Final on-screen labels and the removal of the IT fields are still to be done in P3.3, so this box stays unchecked.)*
 - [ ] Decide whether this longer form captures address/problem/time or deliberately uses fewer fields than the hero form. *(Decision recorded 2026-10-14: no address or preferred time; an optional Message covers the problem description; fewer fields than the old IT form, more than the hero. Box stays unchecked until P3.3 is implemented.)*
 - [ ] Preserve the existing form widget, layout and content-sharing behavior between homepage/contact page.
-- [ ] Connect its submit handler to P3.1 with the same backend field contract and distinct source path.
+- [ ] Connect its submit handler to P3.1 with the same backend field contract (no source or tracking field).
 - [ ] Update on-screen feedback and verify the approved longer-form behavior works: Full Name, Phone Number and Email Address required; HVAC Services required using the same six options and multi-select as the hero form, with at least one service chosen; Message optional; the hidden honeypot never visible or focusable for customers and assistive technology, never blocking a legitimate submission, and rejected on the server when filled; keyboard and accessibility behavior intact. The obsolete IT-form radio buttons, budget and date fields no longer appear.
 - [ ] Test from the contact page **and** the homepage section; verify both create the right SQLite records.
 - [ ] Re-run required source/build checks and inspect mobile rendering.
@@ -466,13 +471,14 @@ The mapping must explicitly cover:
 **Objective:** Ensure every CTA that offers a service request leads to an actually working flow.  
 **Files:** `src/pages/[...lang]/services/[single].astro`, service content/CTA components and any verified forms it renders.
 
-- [ ] Inventory the six HVAC service pages and their existing CTA targets and contact anchors.
-- [ ] For each service page, determine whether there is an embedded form or a link to the shared form; do not invent six new forms if none are needed.
-- [ ] Make source-page attribution reliable for each real entry point.
+- [ ] Inventory the six HVAC service pages and their existing CTA targets and contact anchors. *(Facts: the homepage service cards already link to the six service pages; the in-page request buttons currently use `/#contact`; the header menu "AC Repair" link is a 404. Section 10.3-A.)*
+- [ ] For each service page, determine whether there is an embedded form or a link to the shared form; do not invent six new forms if none are needed. *(Decided 2026-10-14: the in-page request buttons link to `/contact-us/`, which uses the approved longer form.)*
+- *Removed from V1 (owner decision 2026-10-14): lead source tracking, so no source-page attribution, `?source=` parameters or hidden tracking identifiers. The service-page request buttons simply link to `/contact-us/`.*
 - [ ] Test navigation from each service page to a usable request form, and submit one synthetic test lead per distinct pathway.
-- [ ] Confirm the dashboard-ready source and service information is accurate in SQLite.
+- [ ] Fix the broken header-menu "AC Repair" link: `src/config/menu.en.json` points to `/services/service-01/` (a 404); the page is served at `/services/service-custom-slug/`. Found during P0.4 (Section 10.3-A); **a future fix, not part of P1.1a.** Check the mobile menu too.
+- [ ] Confirm the saved service information is accurate in SQLite (no source field in V1).
 
-**Verify/done when:** Every approved “request service” path works and can be attributed to its origin.
+**Verify/done when:** Every approved â€œrequest serviceâ€ path works and saves a correct lead to the same SQLite database.
 
 ---
 
@@ -546,9 +552,9 @@ The mapping must explicitly cover:
 **Objective:** Create the owner's main lead inbox.  
 **Files:** **proposed** `/owner/leads/` page, list UI, read/filter queries.
 
-- [ ] Show name, phone/email where appropriate, requested service, submission date/time, source page and optional status.
+- [ ] Show name, phone/email where appropriate, requested service, submission date/time (no status or source column in V1).
 - [ ] Sort newest-first by default; define how ties are handled for repeatable results.
-- [ ] Add a basic name/phone/email/service search and simple date-range filter; avoid complex query builders.
+- [ ] Add a basic name/phone/email/service search and simple date-range filter; avoid complex query builders. *(The approved dashboard flow covers viewing and searching; the date-range filter is not part of it, so confirm before building.)*
 - [ ] Add manageable pagination or capped results so long histories remain usable.
 - [ ] Provide a readable mobile layout (not a clipped desktop-wide table).
 - [ ] Test search terms, empty results, no-data state, special characters and date boundaries against known records.
@@ -559,10 +565,10 @@ The mapping must explicitly cover:
 **Objective:** Display the complete original inquiry clearly.  
 **Files:** **proposed** `/owner/leads/[id]/` page and protected lookup handler.
 
-- [ ] Show all approved customer fields, original submitted time, service(s), source and request message without clipping long text.
+- [ ] Show all approved customer fields, original submitted time, service(s) and request message (when provided) without clipping long text.
 - [ ] Add simple click-to-call/email affordances only when field data exists; avoid making contact data public.
 - [ ] Show helpful not-found/error handling; never reveal another lead by falling back to an arbitrary record.
-- [ ] If approved, allow a simple status change and record its timestamp; ensure Phase 7 will sync it accurately.
+- *Deferred, not V1 (owner decision 2026-10-14): lead status editing. In V1 the lead detail page is read-only. If statuses are ever added, allow a simple status change, record its timestamp and make sure Phase 7 syncs it.*
 - [ ] Test valid ID, unknown ID, malformed ID, long message, missing optional fields and signed-out access.
 - [ ] Verify restored historical leads can later display with their original IDs and dates.
 
@@ -572,7 +578,7 @@ The mapping must explicitly cover:
 **Objective:** Prevent scope drift.  
 **Prerequisites:** P5.2–P5.4.
 
-- [ ] Ask whether daily usage really requires statuses; if yes, include the smallest New/Contacted/Closed action and test it.
+- *Decided 2026-10-14: no lead statuses in V1; the dashboard is a simple lead-viewing tool, not a CRM. The status questions that were listed here are closed.*
 - [ ] Decide whether CSV export is helpful enough for Version 1; if added, protect it like other lead endpoints.
 - [ ] Reject or defer charts, pipelines, scheduling, bulk emails and unrelated settings.
 
@@ -617,7 +623,7 @@ The mapping must explicitly cover:
 ### Phase 7. Google Sheets synchronization and tested lead importer
 
 **Why now:** The database fields, dashboard and optional edits are defined, so the Sheet can mirror the **actual** lead format.  
-**Depends on:** Phase 2 schema; Phase 3 lead save; Phase 5 if statuses can be edited.  
+**Depends on:** Phase 2 schema; Phase 3 lead save; Phase 5 (read-only in V1; no editable statuses).  
 **Milestone:** Full-fidelity lead copies sync reliably, and a separate fresh SQLite database can be restored from a test Sheet without backups.
 
 #### P7.1 Approve full lead-to-Sheet mapping and account setup
@@ -625,7 +631,7 @@ The mapping must explicitly cover:
 **Files:** **proposed** documented Sheet mapping and private integration configuration.
 
 - [ ] List **every field in the approved `leads` schema**, its Sheet column, data representation and whether blank/NULL is allowed.
-- [ ] Include original stable ID, timestamps, all contact/request fields, source, and status or other editable fields if used.
+- [ ] Include original stable ID, timestamps, all contact/request fields. V1 has no status, source or other editable lead fields.
 - [ ] Choose the simplest authorized Google Sheets access method suitable for a private client Sheet; confirm actual API setup and permission requirements.
 - [ ] Select one private spreadsheet per site, give access only to the required identity, and store its ID/credentials privately.
 - [ ] Keep identifiers, phone numbers and date strings unchanged using appropriate text formatting and API value handling; test `RAW` writes and read-back.
@@ -640,7 +646,7 @@ The mapping must explicitly cover:
 - [ ] After SQLite saves a lead, process its queued Sheets task without delaying the form confirmation until Google responds.
 - [ ] Use the stable lead ID to find an existing Sheet row before adding or updating it; do not assume a row was not written merely because the API timed out.
 - [ ] Store sync status, attempted time, last failure and a next-retry time for each relevant event.
-- [ ] Synchronize any approved lead edits (such as status changes) to the existing row, preserving immutable original values.
+- *Deferred, not V1: V1 leads are read-only (no statuses or edits), so there are no updates to sync. If edits are ever added, synchronize them to the existing row and preserve the immutable original values.*
 - [ ] Define how to detect and reconcile duplicate IDs/rows, missing records and mismatched values; do not silently overwrite conflicts.
 - [ ] Simulate API downtime, timeout-after-write, repeat retries, and concurrent/rapid submissions.
 - [ ] Confirm one client cannot write into another client’s Sheet through a default or misconfigured ID.
@@ -655,7 +661,7 @@ The mapping must explicitly cover:
 - [ ] Retrieve the private test Sheet with supported access or a documented, stable export format.
 - [ ] Validate column names/mapping version and all rows before import: required fields, exact types/encodings, valid timestamps, missing data and duplicate lead IDs.
 - [ ] Report invalid/conflicting rows with row identifiers; do not guess missing values or quietly skip failures.
-- [ ] Insert exact preserved lead IDs and original timestamps, fields and statuses using safe database transactions.
+- [ ] Insert exact preserved lead IDs and original timestamps and fields (no statuses in V1) using safe database transactions.
 - [ ] Design reruns to skip identical existing IDs, stop/report different values for the same ID unless explicitly resolved, and never overwrite unrelated data silently.
 - [ ] Prevent imports from creating “new lead” jobs, sending Resend emails or writing the leads back to the Sheet.
 - [ ] Document how to handle records created after an old Sheet snapshot and how a recovered app will resume new ID generation safely.
@@ -667,7 +673,7 @@ The mapping must explicitly cover:
 **Objective:** Prove the emergency procedure works rather than assuming it will.  
 **Prerequisites:** P7.1–P7.3; a test dashboard and test Sheet.
 
-- [ ] Make synthetic test leads with varied services, phone formats/leading zeros, long text, Unicode, empty optional values, timestamp edges and status edits (if enabled).
+- [ ] Make synthetic test leads with varied services, phone formats/leading zeros, long text, Unicode, empty optional values, and timestamp edges (no status edits in V1).
 - [ ] Sync them to a test Sheet and verify all recoverable fields and changes arrived accurately.
 - [ ] Pretend the SQLite database and snapshots are gone by creating a **different empty test database**; never delete the real one.
 - [ ] Restore from **Sheet data only**, then compare lead count, sorted ID set and **every field value**, including NULL/blank and original dates.
@@ -770,7 +776,7 @@ The mapping must explicitly cover:
 
 - [ ] Use separate production-like test infrastructure, a private **test** Sheet, and a newly created empty SQLite database.
 - [ ] Assume the original database and usable snapshots/backups are unavailable; run only the documented schema recreation + Sheet importer.
-- [ ] Compare all recoverable lead fields to the test Sheet and preserved source reference, including IDs, timestamps, source and statuses.
+- [ ] Compare all recoverable lead fields to the test Sheet and preserved source reference, including IDs, timestamps and every field (V1 has no status or source fields).
 - [ ] Ensure importer re-runs cannot duplicate records or generate email/Sheets side effects.
 - [ ] Confirm re-established owner login works after separate secure account setup.
 - [ ] Open restored leads in dashboard and successfully submit one new synthetic inquiry without an ID collision.
@@ -879,9 +885,9 @@ This is the **recommended learning and delivery sequence**, not a rule that ever
 |---|---|---|---|---|
 | D01 | Which public brand and claims are real? | **Master decision approved:** retain `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and testimonials as editable demo/template content. | **Client-production decision remains open:** replace with verified client data or hide in that client’s version; never remove from master. | Master: decided; client: P9.4/P10.1 Master business-name placeholder: **BlueFlame Heating & Air approved 2026-10-14** |
 | D02 | Astro server setup | Official Node adapter; keep public pages static where reasonable and private/API routes on-demand. | All-server rendering if verified necessary; more runtime dependency for public pages. | P1.1 |
-| D03 | Public form fields | Name, phone, service required; email and extra detail optional if approved. | More fields for better qualification but more friction. | P2.1 Longer-form fields approved 2026-10-14 (Section 4.3); hero-form rules and stored lead record still open |
+| D03 | Public form fields | **Decided 2026-10-14:** Full Name, Phone, Email and HVAC Services required on both forms; the longer form adds an optional Message; both get a hidden, server-validated honeypot. | More fields for better qualification but more friction. | Fields decided 2026-10-14 (Section 4.3); only the exact stored lead record is still frozen in P2.1 |
 | D04 | Lead ID | Stable generated string ID (UUID style) preserved in Sheet/restores. | Numeric ID can work with careful restore/sequence handling; more collision hazards. | P2.1 |
-| D05 | Lead status | Optional simple status only if owner needs it; decide early so edits/export mapping are consistent. | Defer until core list works for simpler V1. | P2.1 |
+| D05 | Lead status | **Decided 2026-10-14: NOT in V1.** The dashboard is read-only lead viewing, not a CRM. | Revisit after V1 only if the owner shows a real need (Section 11). | Decided |
 | D06 | Auth | One owner, maintained password/session approach with server checks and documented reset. | A vetted external provider if requirements justify additional account/service. | P4.1 |
 | D07 | Integration tasks | Minimal SQLite-backed durable jobs inside same app. | Direct sending without durable retry is simpler but not acceptable if failures lose work; external worker only if proven necessary. | P2.2/P6.2 |
 | D08 | Google access | Private per-client Sheet using a supported server-to-server method if practical. | User authorization/OAuth if client ownership/access requires it; more setup. | P7.1 |
@@ -891,7 +897,7 @@ This is the **recommended learning and delivery sequence**, not a rule that ever
 | D12 | Hosting resources | One Machine, one volume; size RAM (1 vs 2 GB) and disk from tests/current prices. | Multiple Machines improve uptime but require SQLite replication/coordination and extra cost. | P8.1 |
 | D13 | Retry execution while sleeping | Confirm always-on/background processing policy or design a reliable wake-up mechanism. | A separate scheduled service only if necessary; do not quietly assume timers run on a stopped Machine. | P6.2/P8.1 |
 | D14 | Client-specific config | Existing `src/config/` + `src/content/` patterns with private deploy settings. | More elaborate config layer only after real reuse pain appears. | P10.1 |
-| D15 | Multi-agent work | Begin with one Claude Code session for a narrowly defined task. | Independent frontend/backend sessions in separate worktrees once shared data contract and merge responsibilities are clear. | Before any parallel work |
+| D15 | Multi-agent work | Begin with one Claude Code session for a narrowly defined task. | Independent frontend/backend sessions in separate worktrees once shared data contract and merge responsibilities are clear. | Before any parallel work Workflow approved 2026-10-14 (Section 9); parallel sessions only after the shared contract is frozen (P2.1) |
 
 **Never silently resolve a pending choice by adding a new platform or package.** State the recommendation, show the evidence, obtain needed approval, then update this table.
 
@@ -906,14 +912,14 @@ This is the **recommended learning and delivery sequence**, not a rule that ever
 | Existing working site | `astro-MASTER-flyio` builds; homepage, contact, service pages, master trust banner, testimonials and mobile layouts remain usable. Protected original repository remains unchanged. |
 | Database | Valid lead saved exactly; invalid/duplicate ID errors handled; fresh schema recreated safely. |
 | Form endpoints | Good submission succeeds; bad/missing/oversized/malicious input rejected server-side; no false success. |
-| Source tracking | Two different page submissions are accurately attributed. |
+| Form placements | A valid submission from each approved form (hero, homepage longer form, Contact Us) saves a correct lead to the same SQLite database; no source or tracking field is stored (V1). |
 | Duplicate behavior | Double-click/retry handled by approved policy; intentional later inquiry still accepted. |
 | Owner login | Authorized login works; logout expires access; bad credentials/expired cookies fail. |
 | Private records | Signed-out user cannot read counts, list, details or APIs, even with known IDs. |
-| Dashboard | Counts, search, dates, source and individual records match SQLite; mobile usable. |
+| Dashboard | Counts, search, dates and individual records match SQLite; mobile usable. |
 | Resend | Successful alert, provider downtime, uncertain send, restart and bounded retry behavior. |
 | Sheets | Every mapped field matches; updates match; timeout/retry does not create duplicate rows. |
-| Importer | Fresh DB without original/backup restores exact lead IDs, fields, timestamps/statuses; rerun safe. |
+| Importer | Fresh DB without original/backup restores exact lead IDs, fields, timestamps (no statuses in V1); rerun safe. |
 | Recovery isolation | Imported history sends **zero** unintended “new inquiry” emails or Sheet rows. |
 | Recovery edge cases | Bad row, duplicate ID, missing column, NULL/blank, leading zeros, missing Sheet permissions reported safely. |
 | Post-recovery | Dashboard shows old leads correctly; next new lead saves with a nonconflicting ID. |
@@ -931,7 +937,7 @@ Task: P3.2 hero form
 Date: [fill in]
 Branch/commit: [fill in]
 Test: Submitted synthetic AC Repair request on local homepage
-Expected: 1 valid lead with correct page source
+Expected: 1 valid lead saved with the submitted fields
 Actual: [fill in after running]
 Result: PASS / FAIL / NOT RUN
 Notes/blocker: [fill in]
@@ -986,6 +992,33 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 **Avoid:** multiple agents editing the same form/backend contract independently, arbitrary feature creation, skipping tests, or telling the user code passed without running it.
 
+### Approved development workflow and rollback (approved by the owner 2026-10-14)
+
+**Approved workflow (owner decision 2026-10-14):** use a focused development branch for coding changes; keep `main` as the stable version; use one primary Claude Code session initially; bring in specialized read-only review/testing subagents when useful; when frontend and backend tasks become independent and their shared data contract is agreed, consider parallel Claude Code sessions in separate Git worktrees and branches; require integration tests and owner approval before merging major changes.
+
+**Status:** approved as the project workflow. `main` stays the stable branch; coding changes happen on focused branches and are merged through pull requests after testing and owner approval; parallel frontend/backend sessions in separate worktrees are allowed later, once responsibilities and the shared data contract are clearly established; safe rollback checkpoints are kept and `main` is never rewritten. **Nothing has been created or changed yet:** no branch, worktree, tag or GitHub setting.
+
+**Assessment: suitable for this repository**, with these repo-specific points:
+1. **It fits:** one developer, `main` equals `origin/main`, no CI workflows and no tests exist yet. One branch per task and one pull request per merge gives the review point you want.
+2. **GitHub-side protection was not checked** (the GitHub CLI is not installed on this computer). Recommended owner action: in the repository's GitHub settings, require a pull request before merging into `main`.
+3. **Deployment side effects are unknown.** The repo contains `netlify.toml`, `vercel.json` and `wrangler.toml`; if any of those services is connected to the repository, branch pushes may start preview builds or merges to `main` may deploy. Owner to confirm which are connected; nothing was assumed.
+4. **"Integration tests" need a decision.** There is no test runner or `test` script today. Choose one in P2.3 (prefer Node's built-in test runner so no new dependency is needed; any new dependency needs approval). Until then the required checks per task are `astro-check`, `build`, the baseline route/form checks and the trust-indicator and testimonial check.
+5. **Parallel sessions and worktrees: not yet.** When used, each worktree needs its own `npm ci` (about 500 packages, about a minute), its own generated `.astro/` config, its own dev port and its own SQLite file. Changes to `package.json`, `package-lock.json`, `astro.config.mjs`, `config.toml`, `src/sections.schema.ts` and the lead-field contract should stay with one session. Start only after P2.1 freezes the contract (see D15).
+6. **Read-only review/testing subagents** can be used now to review a diff or run checks; they must not edit files.
+7. **Merge policy:** pull request into `main` after the checks pass and the owner approves (approved 2026-10-14). A squash merge is recommended so each task is one commit that is easy to revert.
+8. **Local permissions (reviewed 2026-10-14, read-only):** `.claude/settings.local.json` is local to this computer (git-ignored, never committed). It pre-approves a list of diagnostic commands and also standing approvals for `git add IMPLEMENTATION_PLAN.md`, `git push origin main` and `Bash(gh api *)`. Recommendation (not applied; no settings were changed): remove the standing `git push origin main` and `gh api *` entries so every push and any GitHub API write asks for approval. `.env` and `.env.production` are git-ignored.
+
+**Safe rollback procedure (approved 2026-10-14):**
+1. Before each task: `main` is clean and equal to `origin/main`; create the task branch from it.
+2. Checkpoints: after each approved merge, add an owner-approved annotated tag on `main` (for example `checkpoint-p0-complete`, `checkpoint-p1-1a`). Tags are shared on GitHub, so create them only with approval.
+3. Unmerged work that goes wrong: switch back to `main` and delete the branch (locally and on GitHub). `main` was never touched.
+4. Merged change that goes wrong: `git revert` the commit on a new branch and merge it through a pull request. Never force-push or rewrite `main`.
+5. A bad dependency change is undone by reverting its commit (it restores `package.json` and the lockfile), then `npm ci`.
+6. Uncommitted local experiments: review with `git diff`, then `git stash` or restore the files, and only with the owner's approval for anything not made in the current task.
+7. Later phases: a code rollback does not roll back data. Take a Fly volume snapshot or SQLite backup before any database migration, keep migrations forward-only, redeploy the previous Fly release if a deploy fails, and never roll a schema back blindly (already a plan rule).
+
+
+
 ---
 
 ## 10. Progress dashboard (maintain here, not in another tracker)
@@ -994,7 +1027,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 | Phase | Status | Verified milestone | Evidence / link |
 |---|---|---|---|
-| 0. Assessment | **In progress** (P0.1, P0.2 and P0.3 complete; P0.4 open: some decisions approved) | Local baseline verified: `npm ci`, `astro-check` and `build` pass; 16 routes + 404 checked; no overflow at 3 widths | `main` at `3cc073c`, 2026-10-14; details in Section 10.1 |
+| 0. Assessment | **Complete** (P0.1 to P0.4, 2026-10-14; pending commit of this update) | Local baseline verified: `npm ci`, `astro-check` and `build` pass; 16 routes + 404 checked; no overflow at 3 widths | `main` at `3cc073c`, 2026-10-14; details in Section 10.1 |
 | 1. Astro backend | Not started | Server route + existing pages still work | — |
 | 2. SQLite | Not started | Storage/read tests + clean schema creation | — |
 | 3. Forms | Not started | Homepage/contact/service pathways save leads | — |
@@ -1008,10 +1041,10 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 ### Working notes
 
-**Current working task:** None in progress. P0.1 and P0.3 completed 2026-10-14; P0.2 completed 2026-10-14 (Section 10.2); owner decisions on branding and forms recorded 2026-10-14 (awaiting commit approval).  
-**Next recommended task:** P0.4 (remaining owner decisions, informed by Section 10.2). Do not start Phase 1 until the Astro security flag below is addressed in P1.1.  
-**Current blocker:** None for P0.2/P0.4. **Gate for Phase 1 and production:** the Astro (critical) and other `npm audit` findings in Section 10.1 must be reviewed and remediated before enabling server-side functionality or deploying.  
-**Pending approvals:** D02–D15 and the **real-client portion of D01** at their indicated phases. D01 master trust/testimonial preservation is an explicit owner decision, not a pending approval. **P0.4 remaining decisions (2026-10-14):** (1) which other template details to clean up beyond the approved BlueFlame placeholder; (2) hero-form fields (email is required in the current code) and whether the hero form also gets a honeypot; (3) where the service-page request buttons should point (currently `/#contact`); (4) whether New/Contacted/Closed status is in V1; (5) the `/owner/` route family; (6) local-development permissions, branch workflow and rollback checkpoint; (7) the first Phase 1 coding task.
+**Current working task:** None in progress. Phase 0 (P0.1 to P0.4) completed 2026-10-14; owner decisions and findings are recorded in Sections 4.3, 9, 10.2 and 10.3 (awaiting commit approval).  
+**Next recommended task:** P1.1a, after the owner approves the exact package/version changes and test plan (Section 10.3-D). It is the Astro security gate itself; no adapter, backend or UI work starts before it passes.  
+**Current blocker:** None for starting P1.1a once its package list is approved. **Gate for the rest of Phase 1 and production:** the Astro (critical) and other `npm audit` findings in Section 10.1 must be remediated, or accepted with a reason, before enabling server-side functionality or deploying.  
+**Decisions status (2026-10-14):** **Approved:** D01 for the master (BlueFlame placeholder, trust indicators, testimonials), D03 form fields (stored lead record still frozen in P2.1), D05 (no lead status in V1) and D15 (development workflow). **Genuinely unresolved, to be decided at the phase shown in the decision table:** D02 (P1.1), D04 (P2.1), D06 (P4.1), D07 (P2.2/P6.2), D08 (P7.1), D09 and D10 (P2.1/P7.1), D11 (P7.3/P9.2), D12 (P8.1), D13 (P6.2/P8.1), D14 (P10.1), and the real-client portion of D01 (P9.4/P10.1). **Resolved 2026-10-14 (P0.4 complete):** `/owner/` target routes approved; lead source tracking rejected; development workflow approved; first coding task P1.1a approved; other global `/#contact` buttons stay unchanged for now. **Next gate:** owner approval of the exact P1.1a package/version changes and test plan.
 **Confirmed for this revision:** New `astro-MASTER-flyio` repository, branch, selected source files, hero trust content and testimonial section. The new plan was revised locally. No application implementation, builds, deployments or GitHub writes were performed during that 2026-10-13 revision. (The 2026-10-14 P0.3 baseline runs are recorded in Section 10.1.)
 
 ### Decision log
@@ -1023,10 +1056,19 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 | 2026-10-13 | Preserve Astro and existing visual design as the preferred foundation. | Project requirement; working repository already contains substantial Astro UI. | Project preference; technically recheck in P1 |
 | 2026-10-13 | SQLite + one Fly app/volume are the initial direction, not proved production capacity. | Project requirement; small expected workload; actual measurements pending. | Proposed |
 | 2026-10-13 | Sheet-only **lead** reconstruction is a V1 acceptance test, not a substitute for full DB backup. | Project requirement and data-integrity limits. | Required acceptance criterion |
-| 2026-10-14 | "BlueFlame Heating & Air" is the placeholder HVAC business name for the reusable master. Keep the existing BlueFlame content (do not rename, remove or rewrite) and make the name easy to replace for real clients. | Owner decision. Inventory in Section 10.2-G. | **Approved** (the wider template cleanup scope is still open in P0.4) |
+| 2026-10-14 | "BlueFlame Heating & Air" is the placeholder HVAC business name for the reusable master. Keep the existing BlueFlame content (do not rename, remove or rewrite) and make the name easy to replace for real clients. | Owner decision. Inventory in Section 10.2-G. | **Approved** (the wider template cleanup was approved on 2026-10-14 for later implementation; see the template cleanup decision below) |
 | 2026-10-14 | Keep both homepage lead forms with their placements and designs; both connect to the same backend and SQLite database. | Owner decision. Section 4.3. | **Approved** |
 | 2026-10-14 | Longer contact form fields: Full Name, Phone, Email and HVAC Services (all required; services use the same six options and multi-select as the hero, at least one), optional Message, hidden honeypot (server-verified, not the only spam defense). | Owner decision. Section 4.3. | **Approved requirement; not implemented** (P3.3) |
 | 2026-10-14 | The P0.2 "verify trust indicators and testimonials after future work" item moves to P9.4; regression checks continue after any change affecting pages, forms, styling or components. | Owner decision. | **Approved** |
+| 2026-10-14 | Hero form: keep existing fields and multi-select design; Full Name, Phone, Email and HVAC Services stay required; add a hidden honeypot with the backend, validated on the server and never interfering with legitimate submissions. | Owner decision. Section 4.3. | **Approved requirement; not implemented** (P3.2) |
+| 2026-10-14 | Navigation: homepage HVAC service cards/buttons link to their service pages (already true, verified); request/schedule buttons inside the six service pages will link to `/contact-us/` instead of `/#contact`; Contact Us uses the approved longer form; both homepage forms stay. Other global `/#contact` buttons stay unchanged for now. | Owner decision. Section 10.3-A. | **Approved**; no navigation change implemented yet (P3.4) |
+| 2026-10-14 | No New / Contacted / Closed statuses in V1; the dashboard is simple read-only lead viewing, not a CRM. Status requirements were removed or marked deferred in this plan. | Owner decision. | **Approved** |
+| 2026-10-14 | Dashboard flow: Owner Login, Dashboard Overview (all-time, today, this-month counts and recent inquiries), Leads Inbox (view and search), Lead Details (contact information, services, message when provided, submission date). Simple, secure, read-only. | Owner decision. Section 3. | **Approved** |
+| 2026-10-14 | Template cleanup approved for later implementation: replace unrelated Techlo/IT wording, inappropriate demo contact details, metadata and other leftover IT-template content with suitable HVAC demo content; preserve BlueFlame Heating & Air, the trust indicators and all testimonial content and design. | Owner decision. Inventory in Section 10.2-G. | **Approved; not scheduled, nothing changed yet** |
+| 2026-10-14 | `/owner/` target routes approved: `/owner/login/`, `/owner/`, `/owner/leads/`, `/owner/leads/[id]/`. Simple read-only V1; no settings page, lead statuses or CRM features; logout decided in P4.1. Compatibility and functionality are verified during implementation. | Owner decision. Section 10.3-B. | **Approved target routes** |
+| 2026-10-14 | Lead source tracking REJECTED for V1: no `?source=` parameters, hidden tracking identifiers, referral/source logic, source columns or dashboard features. Source-related requirements were removed or reworded across the plan. | Owner decision. | **Approved (proposal rejected)** |
+| 2026-10-14 | Development workflow approved: `main` stable; focused branches; pull requests and testing before merging; one primary Claude Code session first; read-only review/testing subagents when useful; parallel frontend/backend sessions in separate worktrees later, once responsibilities and the shared data contract are clear; safe rollback checkpoints; never rewrite `main`. | Owner decision. Section 9. | **Approved**; nothing created yet |
+| 2026-10-14 | First coding task: P1.1a, dependency security upgrades only, on a dedicated branch, with no unrelated website, backend or UI changes; exact package changes and test plan to be approved first. | Owner decision. Section 10.3-D. | **Approved task; package list pending approval** |
 
 ### Completed task log (update only after verification)
 
@@ -1036,16 +1078,19 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 | 2026-10-13 | P0.2 source identification (partial) | Main form widgets, shared content, theme tokens, master trust indicators and testimonial section/content identified. | GitHub source review only; browser tests not run |
 | 2026-10-14 | P0.1 (complete) | Remote, branch, clean tree, and commits since tree `3dac95b` (documentation only) reconciled with GitHub. | `git fetch`; `HEAD` = `origin/main` = `3cc073c` |
 | 2026-10-14 | P0.2 (complete) | Page/form map, field and service-option inventory, hero multi-select behaviour, validation (network blocked), service-page request links, design baseline, brand/SEO inventory. Success/error submit paths NOT run. Post-change regression check moved to P9.4 by owner decision. | Section 10.2; dev server and preview of `dist/`; tracked files unchanged apart from this plan |
+| 2026-10-14 | P0.4 (complete) | Owner decisions recorded: BlueFlame placeholder; both homepage forms; approved form fields and honeypots; navigation rules; no lead statuses; no lead source tracking; simple read-only dashboard flow and `/owner/` target routes; workflow and rollback; first task P1.1a; template cleanup (later); other `/#contact` buttons unchanged. Investigations: navigation links, route compatibility, Astro/adapter documentation and a read-only upgrade dry run. | Sections 4.3, 9, 10.3; no source, dependency or config file changed |
 | 2026-10-14 | P0.3 (complete) | Lockfile install, `astro-check`, `build`, 16 routes + 404, form destinations (source), responsive/overflow checks, console review, static-route confirmation. | `main` at `3cc073c`; results in Section 10.1. Repo remained clean (no tracked files changed). |
 
 ### Blockers and open questions (update after each session)
 
 - [ ] For an **actual client launch**, what verified brand, rating, review count, license/insurance status and authentic testimonials should be used? Keep the master demo trust elements regardless.
 - [x] Has the existing website ever had a successful local build with this exact version? Capture results. *(Yes: 2026-10-14, `main` at `3cc073c`, `npm run build` exit 0, 32 pages. See Section 10.1.)*
-- [ ] **Astro and dependency security findings (Section 10.1):** approve an upgrade path (P1.1) before server-side work or deployment.
+- [ ] **Astro and dependency security findings (Section 10.1):** the first task P1.1a is approved; its exact package/version changes and test plan await owner approval (Section 10.3-D); this must pass before server-side work or deployment.
+- [ ] **Future bug (not part of P1.1a):** the header menu "AC Repair" link goes to `/services/service-01/`, a 404 (Sections 10.1 item 8 and 10.3-A; fix scheduled in P3.4).
+- [ ] **Optional owner follow-up (not a P0.4 blocker):** confirm whether Netlify, Vercel or Cloudflare is connected to this GitHub repository, and consider requiring pull requests for `main` in the GitHub settings (nothing in GitHub was changed).
 - [ ] Which owner email and private domain will be used for testing and eventual launch? Do not enter credentials into this public document.
-- [ ] Are full-service-address and email mandatory, optional, or a later form improvement? *(Partly answered 2026-10-14: email is required on the longer contact form and no address is collected there; the hero form's email requirement and any address collection remain open.)*
-- [ ] Does the owner need simple New/Contacted/Closed statuses in V1?
+- [ ] Are full-service-address and email mandatory, optional, or a later form improvement? *(Partly answered 2026-10-14: email is required on both forms; neither approved form collects a service address. Whether to add an address later was not stated, so this stays open.)*
+- [x] Does the owner need simple New/Contacted/Closed statuses in V1? *(Answered 2026-10-14: no. Statuses are deferred out of V1.)*
 - [ ] What is the accepted downtime/data-loss tolerance for one Fly.io Machine?
 - [ ] What secure login method best matches the current Astro/server environment?
 
@@ -1078,6 +1123,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 5. **Leftover template/IT content (preserve master trust/testimonials; this is a cleanup list, not an instruction to remove them):** `config.toml` tagline "Free IT Solutions & Services Astro & Tailwind CSS Theme" appears in every page title and the site is named "Techlo"; `baseUrl` is `https://techlo-lite-astro.pages.dev/`; header shows `hello@example.com` and `518-564-3200`; 404 page and blog are IT-themed (the blog pages show only the blog search box, not a lead form (corrected 2026-10-14, Section 10.2-A); `/services/alternative-services/` and `/services/hero-alternatives/` are IT demo pages; `/services/service-03/` title contains "BlueFlame Heating & Air"; the contact form still has IT-project fields (Budget, Start Date, Project Type, Preferred Contact); page content references Boston, MA. Testimonial text is generic IT-business quotes. Additional observations from the 2026-10-14 contact-page review: the contact section shows an address and phone (`1800 Market Street, Suite 420, San Francisco, CA 94103`, `+1 415 555 2300`) that differ from the header's (`1791 Yorkshire Circle Kitty Hawk, NC 279499`, `518-564-3200`); the heading reads "Let's build an awesome project together" with IT-project copy; the service dropdown offers IT services (Web & Mobile App Development, Cloud Infrastructure, Cybersecurity Review, Data Tracking & Analytics, Automation Workflow).
 6. **Large source image.** `alternative-hero-hvac.jpg` is about 2.8 MB at source; the build outputs optimized WebP variants (about 37 kB to 272 kB).
 7. **Route naming.** HVAC service pages use generic slugs (`service-02` to `service-06`, `service-custom-slug`) and the services index is separate; SEO-friendly URLs are a later decision, not a defect found by tests.
+8. **Navigation defects found during P0.4 (not fixed):** the header Services menu "AC Repair" link goes to `/services/service-01/`, which is a 404 (the page is at `/services/service-custom-slug/`); footer service labels are IT names pointing at HVAC pages; "Careers" links to `/`. Details in Section 10.3-A. **Scheduled as a future fix (P3.4), not part of P1.1a.**
 
 ### 10.2 P0.2 page, form and branding inventory (2026-10-14)
 
@@ -1093,7 +1139,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 | `/about-us/`, `/services/`, six HVAC service pages, `/services/alternative-services/`, `/services/hero-alternatives/`, privacy, terms, 404 | None | n/a |
 
 **B. Hero form (V unless marked C)**
-- Fields: `fullName` text, required; `phone` tel, required; `email` email, **required in the current code** (the plan's D03 suggests email optional: a decision for P0.4/P2.1); `services` hidden input, required, filled by the multi-select. Hidden: `_subject` = "New HVAC service request", `_template` = "table". There is **no page/source field** in the payload.
+- Fields: `fullName` text, required; `phone` tel, required; `email` email, **required in the current code** (the plan's D03 suggested email optional; decided 2026-10-14: email stays required on both forms); `services` hidden input, required, filled by the multi-select. Hidden: `_subject` = "New HVAC service request", `_template` = "table". There is **no page/source field** in the payload.
 - Service options (6): AC Repair, Heating Repair, HVAC Installation, Preventive Maintenance, Indoor Air Quality, Emergency HVAC Service.
 - **Multi-select (V):** the button opens a checkbox panel. Ticking boxes writes one text value, joined with a comma and a space, e.g. `AC Repair, HVAC Installation, Indoor Air Quality`. The button label shows the names for 1 to 2 picks and "3 services selected" for 3 or more. Unticking everything empties the value. Arrow, Enter, Space and Escape keyboard handling exists in code (C).
 - Validation (V): empty submit is blocked with the browser's required-field notices and "Please complete all required fields."; a bad email gets the browser's message; valid fields with no service shows "Select at least one service." Nothing was sent in any case.
@@ -1110,7 +1156,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 - Every request/schedule button on all six pages (4 to 5 per page, e.g. "Request AC Repair", "Request Heating Repair", "Request an Estimate", "Schedule Maintenance", "Explore Air Quality Options" / "Request an Air Quality Consultation", "Request HVAC Service", plus a final "Schedule …" button) links to `/#contact`, i.e. the **homepage contact section and its IT-style contact form**, not the hero form and not `/contact-us/`. The sidebar buttons are hard-coded in `src/pages/[...lang]/services/[single].astro`; the final buttons come from the `*-final-cta.md` files.
 - Click-through: on the **production build**, opening `/#contact` from `service-02` scrolled to the contact section (V). On the **dev server** the page changed to `/#contact` but did **not** scroll (V, 3 tries); the cause is unknown and the production result is the one that matters. The Services menu on each page also links to the Emergency page.
 - Extra phone link: the Heating and Emergency pages show "857-123-4567" (`service-emergency-cta-section.md`), which differs from the header number.
-- Nothing in either form records which page or button the visitor came from (relevant to P3.4).
+- Nothing in either form records which page or button the visitor came from (owner decision 2026-10-14: this stays as is; no lead source tracking in V1).
 
 **E. Design baseline (V on desktop 1440 px and about 1024 px, tablet 768 px, mobile 375 px; no horizontal overflow, see Section 10.1)**
 - Type: Sora 400/500/700 for body and most headings; Montserrat 800 for the hero headline (`src/config/fonts.json`). Body 14 px, colour `#585B6F` on white; hero H1 about 44 px and H2 about 39 px at a 1024 px window; H2 colour `#0A165E`.
@@ -1152,6 +1198,56 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 **Not covered by this inventory:** a line-by-line read of every content file (About page, FAQ answers, privacy/terms, blog posts), which belongs to P9.4. Tablet width was reviewed on the homepage only.
 
+### 10.3 P0.4 investigation findings (2026-10-14)
+
+**How to read this:** **V** = verified by running the site (local preview of the existing production build `dist/`, built from the same source; only this plan has changed since) or by running a read-only command. **C** = from reading code, content or documentation, not run. No source, content, styling, config or dependency was changed, and `npm install` was only run as a `--dry-run` that changed nothing.
+
+**A. Navigation facts behind the owner's navigation decisions**
+- **Homepage service cards already link to their own service pages (V).** The six cards go to `/services/service-custom-slug/` (AC Repair) and `/services/service-02/` to `/services/service-06/`; "View all services" goes to `/services/`. No card links to `/#contact`, so **no change is needed there.** Other homepage links: hero "Contact Us" goes to `/#alternative-hero-form`; "Get Expert Advice" (Repair or Replace section) goes to `/#contact`; header "Get in Touch" goes to `/contact-us/`. The owner decision did not mention these three, so none is changed.
+- **Request/Schedule buttons inside the six service pages (owner decision: change to `/contact-us/`).** Today they go to `/#contact` (Section 10.2-D). Where that link is written (C, by search of `src/`): the sidebar buttons in `src/pages/[...lang]/services/[single].astro` (6 occurrences), the six `*-options-section.md` files and the six `*-final-cta.md` files in `src/content/sections/english/`. The same `/#contact` text also appears outside the service pages' own content, in `src/config/config.toml` (1), `call-to-action.md`, `call-to-action-widget.md`, `banner-three.md`, `src/layouts/shortcodes/CardWrapper.astro` (2), and as `#contact` in `repair-vs-replacement-section.md` and `why-choose-us-section.md`. **Decided 2026-10-14: those global and other-page buttons stay unchanged for now**; whoever changes the service-page buttons must still read each rendered button's link before and after the change so that only the in-page service buttons change.
+- **Newly found pre-existing defect (V, not fixed): the header Services menu item "AC Repair" links to `/services/service-01/`, which is a 404.** The AC Repair page is actually served at `/services/service-custom-slug/` because `service-01.mdx` sets `customSlug`. The link is in `src/config/menu.en.json` (also used by the mobile menu); the homepage card and the service pages use the correct slug.
+- **Footer links (V, C):** the footer "Services" column has IT labels pointing at HVAC pages (UI/UX Design and App Development and Web Development go to service-05 or service-02, Digital Marketing to service-03, Cyber Security to service-06), and "Careers" links to `/`. Same file, `menu.en.json`. Part of the approved template cleanup.
+
+**B. Can an `/owner/` area coexist with the existing routes?**
+- Current behaviour (V): the site is single-language (`src/config/language.json` has only `en`; `showDefaultLangInUrl = false`), so public pages sit at the root and `/en/` is a 404. All public pages come from `src/pages/[...lang]/` with `getStaticPaths`; `[...lang]/[page].astro` generates only the `pages` collection entries (privacy-policy, terms-conditions). `/owner/`, `/owner/login/` and `/admin/` return 404 today, so **nothing collides now.**
+- `trailingSlash` is `always` (`config.toml`). Astro answers `/api/leads` with a 404 that mentions the trailing slash (V), so endpoint URLs must be written with the trailing slash (for example `/api/leads/`).
+- Astro routing docs (C): more path segments beat fewer; static (no-parameter) routes beat dynamic ones; named parameters beat rest parameters; prerendered dynamic routes beat on-demand dynamic ones; endpoints beat pages. The docs do not discuss this exact `[...lang]/[page]` plus `owner/` combination, so "no collision" is **an inference to confirm** with the P1.1 test route and a full rebuild.
+- On-demand docs (C): with the default static output, an adapter plus `export const prerender = false` on individual pages or endpoints keeps the rest of the site static; `Astro.cookies`, `Astro.redirect()` and `Astro.request` are available on on-demand routes. The page does not describe POST endpoints specifically; confirm in P1.1.
+- Owner area should: use its own layout (not `Base.astro`, which carries the public header, footer and metadata); be added to `[seo.sitemap] exclude` and `[seo.robotsTxt] disallow` in `config.toml` (both exist and are empty now) and carry a `noindex` tag; avoid logging search terms in query strings, since they may contain customer details.
+
+**`/owner/` URL structure: APPROVED 2026-10-14 as target routes (compatibility and functionality still to be verified during implementation):**
+
+| URL | Purpose |
+|---|---|
+| `/owner/login/` | Owner login |
+| `/owner/` | Dashboard overview: all-time, today and this-month counts, recent inquiries |
+| `/owner/leads/` | Leads Inbox: view and search (search term in a query string such as `?q=`) |
+| `/owner/leads/[id]/` | Individual lead details |
+| *(logout)* | Not an approved route; the exact logout implementation is decided in the authentication phase (P4.1) |
+| *(submission endpoint)* | Not an approved route; its path is decided in P3.1. Suggestion: `/api/leads/` (trailing slash required), outside `/owner/` |
+
+This follows the approved flow exactly, keeps the owner pages in one folder (`src/pages/owner/`, outside `[...lang]`, English only), and drops `/owner/settings/` from V1. Compared with the plan's earlier proposal it only removes the settings page.
+
+**C. Source-page attribution: REJECTED for V1 (owner decision 2026-10-14)**
+Today neither form sends a source (V). The earlier proposal (fixed form identifiers, a `?source=` query string on service-page links and server-side allowlists) is **withdrawn**: there is no source tracking of any kind in V1. The plan was adjusted so that no database, dashboard, form, Sheets or test requirement assumes a source field. If tracking is ever wanted, it would be a new owner decision after V1.
+
+**D. Phase 1 preparation (npm metadata and a `--dry-run`, plus official Astro documentation)**
+- **Order matters:** `@astrojs/node` 11.1.7 (latest) needs `astro ^7.2.1` (npm peer dependency); installed Astro is 7.0.3. So the security upgrade must come before the adapter.
+- **Dry run (nothing changed on disk; `git status` stayed clean)** of `npm install astro@7.3.8 @astrojs/markdown-remark@7.3.2 @astrojs/mdx@7.0.8 sharp@0.35.5` resolved with no conflicts: 52 packages changed, 18 added, 14 removed (for example `devalue` 5.8.1 to 5.9.4, `nanoid` 3.3.15 to 3.3.20, `cookie` 1.1.1 to 2.0.1, `diff` 8 to 9). It also upgrades `satteri` (0.9.3 to 0.10.5) and `@astrojs/markdown-satteri` (0.3.2 to 0.4.3), packages Astro already uses for Markdown (corrected 2026-10-14 from an earlier "adds" wording); **whether Markdown output changes is unknown** and must be tested by comparing built HTML before and after. `astro@7.3.8` requires `@astrojs/markdown-remark ^7.3.0` as a peer (the cause of the earlier failed `npm audit fix` dry run), Node `>=22.12.0` (installed v24.17.0 is fine), and depends on `devalue ^5.9.4`, `smol-toml ^1.9.0` and `svgo ^4.1.0`, the fixed lines for those findings. The `sharp` entry in `package.json` (`^0.34.5`) must change to the 0.35 line for the `sharp` fix; the Astro, `markdown-remark` and `mdx` updates stay inside the declared ranges (lockfile-only). Whether Astro's own `sharp` requirement matches 0.35.5 was not shown by the metadata check.
+- **Dry-run detail (repeated 2026-10-14, nothing changed):** the top level would get `astro` 7.3.8, `@astrojs/markdown-remark` 7.3.2, `@astrojs/mdx` 7.0.8, `sharp` 0.35.5, `devalue` 5.9.4, `smol-toml` 1.9.1, `svgo` 4.1.0, `postcss` 8.5.30, `source-map-js` 1.2.2, `nanoid` 3.3.20, `vite` 8.1.0 to 8.3.4 and `zod` 4.4.3 to 4.6.7. The dry run also lists a second, nested `sharp` 0.34.5 and a nested `@astrojs/markdown-remark` 7.2.4 staying in the tree (probably required by `@realfavicongenerator/image-adapter-node` and `@astrojs/mdx` respectively; not confirmed). Packages the dry run does not change, and which are therefore expected to remain in `npm audit`: `js-yaml`, `toml` (unless its optional update is taken), `fast-uri`, `image-size`/`svgdom`/the favicon adapter, `postcss-selector-parser`/`@tailwindcss/typography`, `argparse`/`sprintf-js`, `http-cache-semantics` and the nested `sharp` 0.34.5. The audit run after the upgrade will say for certain.
+- **Astro changelog notes (C; summary of the 7.3.6 to 7.3.8 entries only, earlier versions were not visible; confirm in the official docs when planning):** with the Node adapter the `Host` header is validated against `security.allowedDomains` (7.3.8), so the real domain must be configured before deployment (P8); `security.checkOrigin` applies only to the content types the docs describe, so cross-origin JSON requests are not rejected (7.3.7), which means our JSON `POST` endpoint needs its own Origin/CSRF check or a form-encoded submission (decide in P3.1); build tooling moved from esbuild to Vite's Oxc/Rolldown (7.3.8).
+- **Adapter docs (C):** `@astrojs/node` in `standalone` mode runs with `node ./dist/server/entry.mjs`, reads `HOST` and `PORT`, serves client files from `dist/client/`, and the docs include a Docker example. **Knock-on effects found in the repo (V/C):** `scripts/remove-draft-from-sitemap.mjs` hardcodes the `dist` folder (so the build step that runs after `astro build` would fail to find the sitemap once output moves to `dist/client`); `netlify.toml` and `wrangler.toml` publish `dist`; `vercel.json` builds with `vercel.sh`. Those static-hosting files are historical for this project, and what to do with them is a P8 decision. There are no GitHub Actions workflows (`.github/` holds only `copilot-instructions.md`).
+
+**First coding task: P1.1a, dependency security upgrade only, on a dedicated branch (for example `phase-1/astro-security-upgrade`). The task is approved (2026-10-14); the exact package changes and test plan below still need owner approval before any dependency is changed.** No adapter, no new routes, no UI or content changes.
+1. Owner approves the exact package list: `astro` 7.3.8, `@astrojs/markdown-remark` 7.3.2, `@astrojs/mdx` 7.0.8, `sharp` 0.35.5 (and optionally `toml` 4.3.0, inside its range).
+2. Before changing anything, build once and keep a copy of the current `dist/` outside the repository as the "before" build.
+3. Make the change on the branch; run `npm ci`, `astro-check`, `build` and `npm audit`; record each remaining finding with a reason.
+4. Compare the built HTML for all 32 pages before and after, then repeat the P0.3 checks (16 routes plus the 404, no overflow, trust indicators, testimonials, both forms render, hero multi-select value).
+5. Owner reviews the diff; merge through a pull request.
+
+Then **P1.1b**: add `@astrojs/node` 11.1.7 with static output unchanged, one harmless on-demand test route, fix the sitemap script path, and re-run the same checks. Why this order and size: it is the smallest change that clears the critical Astro advisory and unblocks the adapter, it keeps upgrade risk separate from adapter risk, and it is one easy-to-revert commit. Alternatives rejected: adapter first (the peer dependency forbids it); upgrade and adapter together (breakage could not be attributed); postponing the upgrade to P8 (contradicts the P1.1 security gate).
+
+
 **Repository protection reminder:** Never push, merge, deploy, or update this plan in the original `techlo-astro-MASTER-Dupe-2`. Only the working `astro-MASTER-flyio` is in scope.
 
 **Update protocol:** When a milestone is truly verified, mark its individual tasks complete, update the phase row with evidence, put the commit reference here, and change the `Current phase`/`Next recommended task` lines at the top. Leave failures visible until resolved. Do not count a plan checkbox as evidence of working software.
@@ -1163,7 +1259,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 Consider only after V1 works and a real business need is demonstrated:
 
 - CSV export, if deferred.
-- Simple lead status, if deferred.
+- Simple lead status (New / Contacted / Closed): explicitly deferred out of V1 by owner decision 2026-10-14; add only if a real need is shown.
 - CRM integrations with a business's existing Jobber, Housecall Pro or other system, subject to their actual supported APIs.
 - More refined follow-up tracking, appointment scheduling, dispatch and analytics if specifically requested.
 - Additional client-site automation once a second deployment has been configured successfully.
