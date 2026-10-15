@@ -7,8 +7,8 @@
 **Plan created:** October 13, 2026  
 **Assessment basis:** Working repository `main` tree at `3dac95ba0467d6e2339b98d5c7c71460e948c022` (checked October 13, 2026), selected source files including the hero trust banner and testimonial content, plus the earlier original-repository assessment and project requirements. *(Historical, as of 2026-10-13: local build/browser behavior was untested at that time. It was tested on 2026-10-14; see Section 10.1.)*  
 **Project status:** Planning; feature implementation has not started in this plan.  
-**Current phase:** Phase 0 in `astro-MASTER-flyio`; P0.1 and P0.3 are complete. P0.2 (page/form/brand inventory) and P0.4 (first decisions) remain.  
-**Next recommended task:** Finish the open P0.2 inventory items, then P0.4. **Astro security findings (Section 10.1) must be reviewed and remediated before any server-side functionality (Phase 1 onward) is enabled or anything is deployed to production.**  
+**Current phase:** Phase 0 in `astro-MASTER-flyio`; P0.1, P0.2 and P0.3 are complete (Section 10.2 holds the P0.2 inventory). P0.4 (first decisions) remains open: some decisions are approved (2026-10-14), others are not.  
+**Next recommended task:** P0.4, resolve the remaining first decisions (listed under Pending approvals in Working notes) with owner approval. **Astro security findings (Section 10.1) must be reviewed and remediated before any server-side functionality (Phase 1 onward) is enabled or anything is deployed to production.**  
 **Scope of this document:** Development roadmap and progress tracker. This revision only updates the plan, not repository code or deployments. The original repository is not to be modified.
 
 > **How to use this plan:** Work through one small task at a time. A checked box (`- [x]`) means the action was actually performed and verified. An unchecked box (`- [ ]`) means it is still pending. An existing file is not proof a feature works. After each development session, update the status table, completed checklist items, test evidence, blockers, and next task. Do not check off untested work.
@@ -102,7 +102,7 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 ### Public website
 
 - Existing homepage, service pages, navigation, contact page, blog, SEO structure, hero trust banner, and testimonial display remain. **Do not remove or redesign the trust banner or testimonials to satisfy generic “placeholder cleanup” tasks in the master.**
-- Main hero form and other visible service request forms feed **one** server-side lead intake flow.
+- Main hero form and other visible service request forms feed **one** server-side lead intake flow. **Owner decision (2026-10-14):** keep both homepage lead forms with their existing placements and designs (the short hero form for immediate capture; the longer form farther down the homepage, which is also the Contact Us form). Both will feed the same backend and SQLite database.
 - After the database confirms the save, the form shows a success message. If the save fails, it shows a helpful error and does not falsely claim success.
 - The same website should work on desktop, tablet and mobile.
 - Visitors do **not** create accounts.
@@ -192,7 +192,7 @@ No database schema has been created or approved yet. These are **conceptual tabl
 |---|---|---|
 | Full name | Required | Know who is requesting service. |
 | Phone | Required | Easy call-back for HVAC jobs. |
-| Email | Optional unless owner prefers mandatory | Allow callers who prefer the phone; validate it if given. |
+| Email | Optional unless owner prefers mandatory. *(Owner decision 2026-10-14: **required on the approved longer form**; the hero form's final email requirement remains undecided.)* | Allow callers who prefer the phone; validate it if given. |
 | Requested service(s) | Required | Distinguish repair, installation, emergency, etc. |
 | Service address or city/ZIP | Consider optional at intake; decide before release | Helps qualify service area without creating unnecessary friction. |
 | Problem description | Optional, with length limit | Gives context for the owner. |
@@ -202,6 +202,13 @@ No database schema has been created or approved yet. These are **conceptual tabl
 | Received timestamp + lead ID | Set on server | Reliable records and recovery. |
 
 **Important existing-form difference:** The hero currently asks for name/phone/email/multiple services. The general form has a different IT-focused field set. Phase 3 must decide whether both forms show the same inputs or map two supported layouts into one consistent lead record. Do not silently discard information that users provided.
+
+**Owner decisions, 2026-10-14 (approved requirements for future implementation; no form has been changed yet):**
+
+- **Both homepage forms stay**, with their existing placements and visual designs: the short hero form for immediate lead capture, and the longer form farther down the homepage (also used on the Contact Us page) as a second chance to capture leads. Both will connect to the same backend and SQLite database even though they collect different amounts of information.
+- **Longer form: approved fields** (to be built in P3.3). (1) **Full Name**, required, one field (not separate first/last). (2) **Phone Number**, required. (3) **Email Address**, required on this longer form (the hero form's final email requirement is still undecided). (4) **HVAC Services**, required, using the same six service options and the same multi-select behaviour as the hero form; at least one service must be selected. (5) **Message**, optional text box for describing the HVAC issue or asking a question. (6) **Honeypot**, a hidden anti-spam field that must not interfere with legitimate customers (hidden from sight and assistive technology, no autofill triggers) and must be verified on the server when implemented; it must not be the only spam defense (server validation and rate limiting in P3.1 also apply).
+- The outdated IT questions on the longer form (budget, start date, project type, preferred contact, IT service list) will be replaced in P3.3. Do not change either form before then.
+- **Still open (P0.4 / P2.1):** the hero form's own field rules (its email is required in the current code) and whether it also gets a honeypot; the exact stored lead record (both forms must map to one record, with Message empty or "not provided" for the hero form); and where the service-page request buttons point.
 
 ### 4.4 Recovery contract: SQLite ↔ Google Sheets
 
@@ -258,13 +265,12 @@ The mapping must explicitly cover:
 - [x] Identify the two current form widgets and external provider settings in source.
 - [x] Identify the shared contact content and existing design tokens in source.
 - [x] Locate and confirm the master hero trust banner, testimonial content file, testimonial component and homepage usage in the working repository.
-- [ ] Build a page/form inventory showing every place a form appears and which form widget it uses.
-- [ ] Record each current field name, required rule, service options and submit/success/error behavior, including multi-select serialization.
-- [ ] Review images, fonts, spacing, buttons, layouts and color use **in a running browser** on desktop/mobile.
-- [ ] Inventory demo business names, contact details, SEO defaults and trust/testimonial content; clearly distinguish **master demo elements to preserve** from any values needing verification or replacement in a **real client deployment**.
-- [ ] Visually verify that `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and the testimonial section remain unchanged on desktop and mobile after future work.
+- [x] Build a page/form inventory showing every place a form appears and which form widget it uses. *(2026-10-14: 17 URLs checked in page HTML; two lead forms on `/` (hero + contact), one on `/contact-us/`, none elsewhere; blog "form" is the search box. Section 10.2-A.)*
+- [x] Record each current field name, required rule, service options and submit/success/error behavior, including multi-select serialization. *(2026-10-14: fields, required rules, options and hero multi-select serialization (comma+space text) verified in the browser; validation messages verified with network blocked; **success/error submit behaviour is from code reading only, because no valid submission was made by design.** Section 10.2-B and C.)*
+- [x] Review images, fonts, spacing, buttons, layouts and color use **in a running browser** on desktop/mobile. *(2026-10-14: homepage sections viewed at 1440 px and 375 px, hero/testimonial at 768 px, contact form at about 1024 px; fonts, colours, buttons measured in the browser. Other pages were not each reviewed visually. Section 10.2-E.)*
+- [x] Inventory demo business names, contact details, SEO defaults and trust/testimonial content; clearly distinguish **master demo elements to preserve** from any values needing verification or replacement in a **real client deployment**. *(2026-10-14: config, content search and rendered metadata inventoried; Section 10.2-G. A line-by-line read of all copy is not included and belongs to P9.4.)*
 
-**Verify/done when:** A short evidence-based form/page map exists; no assumptions about live functionality or visual quality are presented as tests.
+**Verify/done when:** A short evidence-based form/page map exists; no assumptions about live functionality or visual quality are presented as tests. **Status: complete (2026-10-14).** The inventory is recorded in Section 10.2. The post-change regression check that was listed here was moved to P9.4 by owner decision (2026-10-14); it still applies after any change affecting pages, forms, styling or components.
 
 #### P0.3 Run the untouched site locally and save a baseline
 **Objective:** Find existing errors before adding backend code.  
@@ -287,7 +293,7 @@ The mapping must explicitly cover:
 **Files:** This plan only during the decision step.
 
 - [x] Confirm the master template retains **`5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and all existing testimonials** as editable demo content.
-- [ ] Approve the intended master demo brand and which additional template details need cleanup **without removing preserved trust/testimonial elements**. Decide real-client brand facts separately when a client is onboarded.
+- [ ] Approve the intended master demo brand and which additional template details need cleanup **without removing preserved trust/testimonial elements**. Decide real-client brand facts separately when a client is onboarded. *(Partly decided 2026-10-14: **"BlueFlame Heating & Air" is the approved placeholder HVAC business name for the reusable master**; keep the existing BlueFlame content and do not rename, remove or rewrite it. Still open: which other template details (IT titles/metadata, demo domain, footer, blog, contact details and similar) to clean up. Left unchecked.)*
 - [ ] Approve proposed core lead fields and whether “New / Contacted / Closed” belongs in V1.
 - [ ] Agree the planned private `/owner/` route family after checking existing routing.
 - [ ] Review local-development permissions, GitHub branch workflow, and safe rollback checkpoint.
@@ -354,7 +360,7 @@ The mapping must explicitly cover:
 **Objective:** Define exactly what one lead means.  
 **Files:** Source form content/config files listed in P0.2; **proposed** schema/mapping documentation near backend code.
 
-- [ ] Compare all live form fields and approve required/optional V1 lead fields.
+- [ ] Compare all live form fields and approve required/optional V1 lead fields. *(Input: the owner approved the longer contact form's fields on 2026-10-14; see Section 4.3. Hero-form rules remain open.)*
 - [ ] Approve canonical field names, data types, limits, how multi-select services are stored, and sensible default/empty values.
 - [ ] Choose a stable lead ID format and store the generated ID without changing it later.
 - [ ] Define timestamps (server-created UTC, original value maintained; optional last-modified time), source pages and optional status.
@@ -421,7 +427,7 @@ The mapping must explicitly cover:
 - [ ] Agree input names and service encoding with both existing form components.
 - [ ] Accept only supported form fields and enforce required values, types, size limits and allowed service choices **on the server**.
 - [ ] Normalize/sanitize user input as appropriate; do not trust a hidden page/source field without checking it.
-- [ ] Add an appropriate simple spam/abuse defense and sensible submission rate limiting; do not make the public site hard to use.
+- [ ] Add an appropriate simple spam/abuse defense and sensible submission rate limiting; do not make the public site hard to use. *Owner-approved requirement (2026-10-14): the longer form will include a hidden honeypot field; verify it on the server, make sure it never blocks legitimate customers, and do not rely on it as the only defense.*
 - [ ] Save valid leads through P2.3 and return a safe success with ID; reject invalid/malicious requests without inserting leads.
 - [ ] Return safe, usable error responses. Prevent accidental exposure of exception details, credentials and other leads.
 - [ ] Test direct requests that bypass browser validation, including repeated requests and large invalid values.
@@ -446,11 +452,11 @@ The mapping must explicitly cover:
 **Objective:** Replace outdated IT-project intake while reusing the existing form widget.  
 **Files:** `src/content/sections/english/contact-section.md`, `src/content/sections/english/contact-section-two.md`, `src/layouts/components/widgets/ContactForm.astro`, `src/layouts/components/sections/ContactSectionTwo.astro`, `src/sections.schema.ts` only if required.
 
-- [ ] Approve the HVAC question labels and inputs; remove irrelevant budget, project type and web/cloud service choices from the form content.
-- [ ] Decide whether this longer form captures address/problem/time or deliberately uses fewer fields than the hero form.
+- [ ] Approve the HVAC question labels and inputs; remove irrelevant budget, project type and web/cloud service choices from the form content. *(Inputs approved 2026-10-14: Full Name (required), Phone Number (required), Email Address (required), HVAC Services (required; same six options and multi-select as the hero; at least one), optional Message, hidden honeypot; see Section 4.3. Final on-screen labels and the removal of the IT fields are still to be done in P3.3, so this box stays unchecked.)*
+- [ ] Decide whether this longer form captures address/problem/time or deliberately uses fewer fields than the hero form. *(Decision recorded 2026-10-14: no address or preferred time; an optional Message covers the problem description; fewer fields than the old IT form, more than the hero. Box stays unchecked until P3.3 is implemented.)*
 - [ ] Preserve the existing form widget, layout and content-sharing behavior between homepage/contact page.
 - [ ] Connect its submit handler to P3.1 with the same backend field contract and distinct source path.
-- [ ] Update on-screen feedback and verify radio, select, checkbox and accessibility behavior still work.
+- [ ] Update on-screen feedback and verify the approved longer-form behavior works: Full Name, Phone Number and Email Address required; HVAC Services required using the same six options and multi-select as the hero form, with at least one service chosen; Message optional; the hidden honeypot never visible or focusable for customers and assistive technology, never blocking a legitimate submission, and rejected on the server when filled; keyboard and accessibility behavior intact. The obsolete IT-form radio buttons, budget and date fields no longer appear.
 - [ ] Test from the contact page **and** the homepage section; verify both create the right SQLite records.
 - [ ] Re-run required source/build checks and inspect mobile rendering.
 
@@ -777,10 +783,11 @@ The mapping must explicitly cover:
 **Files:** Existing page/content/theme/SEO components, new dashboard and form components.
 
 - [ ] Confirm the intended **real-client production** brand, business contact details, locations, hours and service areas across pages and structured data; keep master demo branding customizable.
-- [ ] Correct unrelated Techlo/IT copy, demo domain metadata, BlueFlame/Techlo references and generic addresses **where appropriate**, without stripping the master’s existing ratings, review count, licensed/insured badge or testimonials. On an actual client launch, supply substantiation and real customer testimonials, or hide only the unsupported elements in that **client deployment**. The protected master content remains intact.
+- [ ] Correct unrelated Techlo/IT copy, demo domain metadata, Techlo/IT references (**not** the approved BlueFlame placeholder) and generic addresses **where appropriate**, without stripping the master’s existing ratings, review count, licensed/insured badge or testimonials. On an actual client launch, supply substantiation and real customer testimonials, or hide only the unsupported elements in that **client deployment**. The protected master content remains intact. **"BlueFlame Heating & Air" is the approved master-template placeholder (owner decision 2026-10-14) and must remain in the master.** This cleanup targets unrelated IT/Techlo content and inappropriate demo details (titles, metadata, demo domain, addresses and phone numbers, footer, blog, IT form text); BlueFlame is replaced only in a real client's own copy.
 - [ ] Audit heading structure, titles/descriptions, internal links, six service URLs, robots, sitemap, canonical URLs and indexing rules.
 - [ ] Review images and large files for loading performance while maintaining approved visual quality; add accurate alt text.
 - [ ] Test public pages, all form pathways, dashboard mobile experience, keyboard navigation, readable focus states and accessible errors.
+- [ ] **Regression check (moved here from P0.2, 2026-10-14):** Visually verify that the `5.0 Rating`, `200+ Reviews` and `Licensed & Insured` trust indicators and the testimonial section remain unchanged on desktop and mobile after development work, comparing with the pre-change baseline in Section 10.2-F. Do not wait for P9.4 to do this: repeat the check after every change that affects pages, forms, styling or components (see Section 9, per-task routine).
 - [ ] Test downtime cases: database save failure, email unavailable, Sheets unavailable, same request twice and service recovery.
 - [ ] Check that normal traffic and simple concurrent submissions do not create unexpected failures; record actual results, not guessed capacity.
 - [ ] Get owner approval before using real business claims or switching the real domain to the new application.
@@ -800,7 +807,7 @@ The mapping must explicitly cover:
 **Files:** Existing `src/config/config.toml`, `src/config/fonts.json`, `src/styles/theme.css`, `src/content/`, image locations; **proposed** small deployment-specific config only if justified.
 
 - [ ] Inventory brand name, logo, colors, fonts, phone, email, addresses, hours, services, service areas, imagery, CTA text, SEO defaults, **trust ratings/review count, license/insurance label and testimonial content**.
-- [ ] Centralize repeated business values using the existing content/config conventions; do not create a large CMS. **Keep the master’s sample trust values and testimonial section visible and editable** while allowing each client deployment to substitute verified content or conditionally hide unverified claims.
+- [ ] Centralize repeated business values using the existing content/config conventions; do not create a large CMS. **Keep the master’s sample trust values and testimonial section visible and editable** while allowing each client deployment to substitute verified content or conditionally hide unverified claims. The approved master placeholder "BlueFlame Heating & Air" (2026-10-14) currently appears in about 25 content files and is hard-coded in `ServiceTrustSection.astro` and `src/pages/[...lang]/services/[single].astro`; make it replaceable from one place for each client, **without renaming, removing or rewriting the master placeholder content**.
 - [ ] Keep reusable form/database/dashboard behavior independent of brand name or contact copy.
 - [ ] Separate public business configuration from private recipient email, Sheet ID, credentials and session secrets.
 - [ ] Confirm a harmless brand edit, verified review-count update, license-badge adjustment, or testimonial replacement for a client does not require rewriting lead processing or database tables.
@@ -870,9 +877,9 @@ This is the **recommended learning and delivery sequence**, not a rule that ever
 
 | ID | Decision / unknown | Recommended starting point | Alternative / tradeoff | Decide by |
 |---|---|---|---|---|
-| D01 | Which public brand and claims are real? | **Master decision approved:** retain `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and testimonials as editable demo/template content. | **Client-production decision remains open:** replace with verified client data or hide in that client’s version; never remove from master. | Master: decided; client: P9.4/P10.1 |
+| D01 | Which public brand and claims are real? | **Master decision approved:** retain `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and testimonials as editable demo/template content. | **Client-production decision remains open:** replace with verified client data or hide in that client’s version; never remove from master. | Master: decided; client: P9.4/P10.1 Master business-name placeholder: **BlueFlame Heating & Air approved 2026-10-14** |
 | D02 | Astro server setup | Official Node adapter; keep public pages static where reasonable and private/API routes on-demand. | All-server rendering if verified necessary; more runtime dependency for public pages. | P1.1 |
-| D03 | Public form fields | Name, phone, service required; email and extra detail optional if approved. | More fields for better qualification but more friction. | P2.1 |
+| D03 | Public form fields | Name, phone, service required; email and extra detail optional if approved. | More fields for better qualification but more friction. | P2.1 Longer-form fields approved 2026-10-14 (Section 4.3); hero-form rules and stored lead record still open |
 | D04 | Lead ID | Stable generated string ID (UUID style) preserved in Sheet/restores. | Numeric ID can work with careful restore/sequence handling; more collision hazards. | P2.1 |
 | D05 | Lead status | Optional simple status only if owner needs it; decide early so edits/export mapping are consistent. | Defer until core list works for simpler V1. | P2.1 |
 | D06 | Auth | One owner, maintained password/session approach with server checks and documented reset. | A vetted external provider if requirements justify additional account/service. | P4.1 |
@@ -958,7 +965,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 3. Briefly explain the task, which existing files need changes, any proposed new paths, and how success will be checked.
 4. Work on a focused Git branch when changing code. A branch is a safe separate line of changes; a commit is a saved checkpoint.
 5. Implement **only the agreed task**. Avoid unrelated refactors or design changes. Preserve master trust labels, existing testimonials and their visual components unless the owner explicitly changes this requirement.
-6. Run suitable code checks, automated tests and manual checks; inspect actual output.
+6. Run suitable code checks, automated tests and manual checks; inspect actual output. After any change affecting pages, forms, styling or components, re-check the `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` trust banner and the testimonial section against the baseline in Section 10.2-F.
 7. Review the changes (Git diff) for accidental edits, bugs, security issues, exposed credentials and unnecessary dependencies.
 8. Resolve failures before claiming completion. Preserve or restore the last working version if a change is unsuccessful.
 9. Save a meaningful Git commit. Use a pull request for review before merging changes into `main` when useful.
@@ -987,7 +994,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 | Phase | Status | Verified milestone | Evidence / link |
 |---|---|---|---|
-| 0. Assessment | **In progress** (P0.1 and P0.3 complete; P0.2 and P0.4 open) | Local baseline verified: `npm ci`, `astro-check` and `build` pass; 16 routes + 404 checked; no overflow at 3 widths | `main` at `3cc073c`, 2026-10-14; details in Section 10.1 |
+| 0. Assessment | **In progress** (P0.1, P0.2 and P0.3 complete; P0.4 open: some decisions approved) | Local baseline verified: `npm ci`, `astro-check` and `build` pass; 16 routes + 404 checked; no overflow at 3 widths | `main` at `3cc073c`, 2026-10-14; details in Section 10.1 |
 | 1. Astro backend | Not started | Server route + existing pages still work | — |
 | 2. SQLite | Not started | Storage/read tests + clean schema creation | — |
 | 3. Forms | Not started | Homepage/contact/service pathways save leads | — |
@@ -1001,10 +1008,10 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 ### Working notes
 
-**Current working task:** None in progress. P0.1 and P0.3 completed 2026-10-14 (local `main` at `3cc073c`).  
-**Next recommended task:** Finish the open P0.2 inventory items, then P0.4. Do not start Phase 1 until the Astro security flag below is addressed in P1.1.  
+**Current working task:** None in progress. P0.1 and P0.3 completed 2026-10-14; P0.2 completed 2026-10-14 (Section 10.2); owner decisions on branding and forms recorded 2026-10-14 (awaiting commit approval).  
+**Next recommended task:** P0.4 (remaining owner decisions, informed by Section 10.2). Do not start Phase 1 until the Astro security flag below is addressed in P1.1.  
 **Current blocker:** None for P0.2/P0.4. **Gate for Phase 1 and production:** the Astro (critical) and other `npm audit` findings in Section 10.1 must be reviewed and remediated before enabling server-side functionality or deploying.  
-**Pending approvals:** D02–D15 and the **real-client portion of D01** at their indicated phases. D01 master trust/testimonial preservation is an explicit owner decision, not a pending approval.  
+**Pending approvals:** D02–D15 and the **real-client portion of D01** at their indicated phases. D01 master trust/testimonial preservation is an explicit owner decision, not a pending approval. **P0.4 remaining decisions (2026-10-14):** (1) which other template details to clean up beyond the approved BlueFlame placeholder; (2) hero-form fields (email is required in the current code) and whether the hero form also gets a honeypot; (3) where the service-page request buttons should point (currently `/#contact`); (4) whether New/Contacted/Closed status is in V1; (5) the `/owner/` route family; (6) local-development permissions, branch workflow and rollback checkpoint; (7) the first Phase 1 coding task.
 **Confirmed for this revision:** New `astro-MASTER-flyio` repository, branch, selected source files, hero trust content and testimonial section. The new plan was revised locally. No application implementation, builds, deployments or GitHub writes were performed during that 2026-10-13 revision. (The 2026-10-14 P0.3 baseline runs are recorded in Section 10.1.)
 
 ### Decision log
@@ -1016,6 +1023,10 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 | 2026-10-13 | Preserve Astro and existing visual design as the preferred foundation. | Project requirement; working repository already contains substantial Astro UI. | Project preference; technically recheck in P1 |
 | 2026-10-13 | SQLite + one Fly app/volume are the initial direction, not proved production capacity. | Project requirement; small expected workload; actual measurements pending. | Proposed |
 | 2026-10-13 | Sheet-only **lead** reconstruction is a V1 acceptance test, not a substitute for full DB backup. | Project requirement and data-integrity limits. | Required acceptance criterion |
+| 2026-10-14 | "BlueFlame Heating & Air" is the placeholder HVAC business name for the reusable master. Keep the existing BlueFlame content (do not rename, remove or rewrite) and make the name easy to replace for real clients. | Owner decision. Inventory in Section 10.2-G. | **Approved** (the wider template cleanup scope is still open in P0.4) |
+| 2026-10-14 | Keep both homepage lead forms with their placements and designs; both connect to the same backend and SQLite database. | Owner decision. Section 4.3. | **Approved** |
+| 2026-10-14 | Longer contact form fields: Full Name, Phone, Email and HVAC Services (all required; services use the same six options and multi-select as the hero, at least one), optional Message, hidden honeypot (server-verified, not the only spam defense). | Owner decision. Section 4.3. | **Approved requirement; not implemented** (P3.3) |
+| 2026-10-14 | The P0.2 "verify trust indicators and testimonials after future work" item moves to P9.4; regression checks continue after any change affecting pages, forms, styling or components. | Owner decision. | **Approved** |
 
 ### Completed task log (update only after verification)
 
@@ -1024,6 +1035,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 | 2026-10-13 | P0.1 source review (partial) | New working repo/tree, selected instructions/config and absence of plan file in its `main`. | `astro-MASTER-flyio` tree `3dac95ba...`; runtime tests not run |
 | 2026-10-13 | P0.2 source identification (partial) | Main form widgets, shared content, theme tokens, master trust indicators and testimonial section/content identified. | GitHub source review only; browser tests not run |
 | 2026-10-14 | P0.1 (complete) | Remote, branch, clean tree, and commits since tree `3dac95b` (documentation only) reconciled with GitHub. | `git fetch`; `HEAD` = `origin/main` = `3cc073c` |
+| 2026-10-14 | P0.2 (complete) | Page/form map, field and service-option inventory, hero multi-select behaviour, validation (network blocked), service-page request links, design baseline, brand/SEO inventory. Success/error submit paths NOT run. Post-change regression check moved to P9.4 by owner decision. | Section 10.2; dev server and preview of `dist/`; tracked files unchanged apart from this plan |
 | 2026-10-14 | P0.3 (complete) | Lockfile install, `astro-check`, `build`, 16 routes + 404, form destinations (source), responsive/overflow checks, console review, static-route confirmation. | `main` at `3cc073c`; results in Section 10.1. Repo remained clean (no tracked files changed). |
 
 ### Blockers and open questions (update after each session)
@@ -1032,7 +1044,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 - [x] Has the existing website ever had a successful local build with this exact version? Capture results. *(Yes: 2026-10-14, `main` at `3cc073c`, `npm run build` exit 0, 32 pages. See Section 10.1.)*
 - [ ] **Astro and dependency security findings (Section 10.1):** approve an upgrade path (P1.1) before server-side work or deployment.
 - [ ] Which owner email and private domain will be used for testing and eventual launch? Do not enter credentials into this public document.
-- [ ] Are full-service-address and email mandatory, optional, or a later form improvement?
+- [ ] Are full-service-address and email mandatory, optional, or a later form improvement? *(Partly answered 2026-10-14: email is required on the longer contact form and no address is collected there; the hero form's email requirement and any address collection remain open.)*
 - [ ] Does the owner need simple New/Contacted/Closed statuses in V1?
 - [ ] What is the accepted downtime/data-loss tolerance for one Fly.io Machine?
 - [ ] What secure login method best matches the current Astro/server environment?
@@ -1063,9 +1075,82 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 2. **Astro security findings: REVIEW, APPROVE AND TEST DEPENDENCY UPGRADES BEFORE ENABLING ANY SERVER-SIDE FUNCTIONALITY (adapter, API/form endpoint, login, dashboard) OR PRODUCTION DEPLOYMENT.** Installed `astro@7.0.3`. Advisories (severity per the advisory): remote code execution through AVIF image optimization via `libheif`, **critical**, CVSS 9.8, affects `<7.2.8`, GHSA-26w7-cxv4-gfx2 (this one advisory is why the audit labels Astro "critical"; the advisory says projects are affected when an attacker can cause Astro to process an untrusted AVIF image); `astro/hono` pipeline can bypass `security.checkOrigin`, moderate, `>=7.0.0 <7.0.6`, GHSA-8mv7-9c27-98vc; XSS via unescaped spread attribute names, moderate, `<7.0.6`, GHSA-f48w-9m4c-m7f5; reflected XSS via View Transition animation properties, moderate, `<=7.0.9`, GHSA-4g3v-8h47-v7g6; authorization bypass when stripping a configured `base`, moderate, `<=7.2.3` (fixed 7.2.4), GHSA-376h-93r7-7g6f (needs a non-root `base` plus middleware that authorizes by `context.url.pathname`); XSS via `transition:*` directive values, low, `<7.0.4`, GHSA-7pw4-f3q4-r2p2. `sharp@0.34.5` has three high advisories (libvips, libheif, librsvg; GHSA-f88m-g3jw-g9cj, GHSA-rgj7-g3m4-5g8c, GHSA-wq5f-xc86-pv6w, fixed in 0.35.0 to 0.35.5). Confirmed for the current static site: no adapter, server output, middleware, `base` setting, view transitions or `astro/hono` usage found in `src`, `scripts` or `astro.config.mjs`; **no AVIF images found** in `src/` or `public/` (the only "avif" reference is a type name in `src/lib/utils/bgOptimizedImage.ts`); **no customer image-upload feature exists or is planned for V1**. So these are **not confirmed exploitable today**. **Possible future risk:** once server rendering, form endpoints and a login exist, the `checkOrigin` and `devalue` issues become relevant (form/CSRF protection and server data handling), and the XSS issues matter if customer-supplied text is rendered; the AVIF/`sharp` issues would matter only if untrusted images are ever processed. **Unknown:** whether any component spreads attacker-influenced attribute names; how Astro uses `http-cache-semantics` internally; whether Astro 7.3.8 changes theme behavior. Required before server-side work (P1.1 gate): approve an upgrade path (likely `astro` to 7.2.8 or later, with matching `@astrojs/markdown-remark` and `sharp` versions and `devalue`/`smol-toml`/`svgo` as resolved), apply it on a branch, and re-run `astro-check`, `build`, the P0.3 baseline checks (16 routes, 404, no overflow, trust banner and testimonials intact) and `npm audit`. Build/dev-tooling findings (`postcss`, `nanoid`, `source-map-js`, `postcss-selector-parser`, `js-yaml`, `toml`, `fast-uri`, favicon tools) process only project-authored files and may wait or be taken opportunistically within declared version ranges.
 3. **Development-server errors (dev only).** (a) `404 (Not Found)` console lines appear only when requesting the nonexistent test URL; expected behavior. (b) `504 (Outdated Optimize Dep)` on `/@id/astro/runtime/client/dev-toolbar/entrypoint.js` (Astro's dev toolbar) occurred once during the first heavy cold-cache session; **not reproduced** after a server restart (fresh tab, 15 pages, zero errors). The exact triggering dependency was not confirmed. The production build had no errors.
 4. **Placeholder form destination.** Both forms POST JSON via `formSubmit` to `https://formsubmit.co/ajax/temp.gats@gmail.com` (`src/config/config.toml`, `contactFormAction`). This is a template address, not lead storage. `FormHandle.ts` also contains a hard-coded Formspree URL used only if the provider is set to `formspree`. Do not submit real or test customer data to it.
-5. **Leftover template/IT content (preserve master trust/testimonials; this is a cleanup list, not an instruction to remove them):** `config.toml` tagline "Free IT Solutions & Services Astro & Tailwind CSS Theme" appears in every page title and the site is named "Techlo"; `baseUrl` is `https://techlo-lite-astro.pages.dev/`; header shows `hello@example.com` and `518-564-3200`; 404 page and blog are IT-themed (blog also has a form on `/blog/` and post pages); `/services/alternative-services/` and `/services/hero-alternatives/` are IT demo pages; `/services/service-03/` title contains "BlueFlame Heating & Air"; the contact form still has IT-project fields (Budget, Start Date, Project Type, Preferred Contact); page content references Boston, MA. Testimonial text is generic IT-business quotes. Additional observations from the 2026-10-14 contact-page review: the contact section shows an address and phone (`1800 Market Street, Suite 420, San Francisco, CA 94103`, `+1 415 555 2300`) that differ from the header's (`1791 Yorkshire Circle Kitty Hawk, NC 279499`, `518-564-3200`); the heading reads "Let's build an awesome project together" with IT-project copy; the service dropdown offers IT services (Web & Mobile App Development, Cloud Infrastructure, Cybersecurity Review, Data Tracking & Analytics, Automation Workflow).
+5. **Leftover template/IT content (preserve master trust/testimonials; this is a cleanup list, not an instruction to remove them):** `config.toml` tagline "Free IT Solutions & Services Astro & Tailwind CSS Theme" appears in every page title and the site is named "Techlo"; `baseUrl` is `https://techlo-lite-astro.pages.dev/`; header shows `hello@example.com` and `518-564-3200`; 404 page and blog are IT-themed (the blog pages show only the blog search box, not a lead form (corrected 2026-10-14, Section 10.2-A); `/services/alternative-services/` and `/services/hero-alternatives/` are IT demo pages; `/services/service-03/` title contains "BlueFlame Heating & Air"; the contact form still has IT-project fields (Budget, Start Date, Project Type, Preferred Contact); page content references Boston, MA. Testimonial text is generic IT-business quotes. Additional observations from the 2026-10-14 contact-page review: the contact section shows an address and phone (`1800 Market Street, Suite 420, San Francisco, CA 94103`, `+1 415 555 2300`) that differ from the header's (`1791 Yorkshire Circle Kitty Hawk, NC 279499`, `518-564-3200`); the heading reads "Let's build an awesome project together" with IT-project copy; the service dropdown offers IT services (Web & Mobile App Development, Cloud Infrastructure, Cybersecurity Review, Data Tracking & Analytics, Automation Workflow).
 6. **Large source image.** `alternative-hero-hvac.jpg` is about 2.8 MB at source; the build outputs optimized WebP variants (about 37 kB to 272 kB).
 7. **Route naming.** HVAC service pages use generic slugs (`service-02` to `service-06`, `service-custom-slug`) and the services index is separate; SEO-friendly URLs are a later decision, not a defect found by tests.
+
+### 10.2 P0.2 page, form and branding inventory (2026-10-14)
+
+**How to read this:** **V** = verified by running the site (dev server `http://localhost:4321` and/or a local preview of the existing production build `dist/`, built earlier on 2026-10-14 from the same source; only `IMPLEMENTATION_PLAN.md` has changed since). **C** = found by reading code or content only; **not run**. Nothing was submitted to the template address: browser network calls were blocked by a test stub while checking validation, and no valid submission was attempted. No source, content, styling, config or dependency was changed.
+
+**A. Where forms appear (V: 17 URLs checked in the page HTML; C for component wiring)**
+
+| Page | Lead-request form | Widget and content source |
+|---|---|---|
+| `/` (homepage) | **Two**: hero estimate form (`#alternative-hero-form`) and contact form (`#contact-form`, inside section `id="contact"`) | `AlternativeHeroForm.astro` via `AlternativeHeroSection` (`alternative-hero-section.md`); `ContactForm.astro` via `ContactSectionTwo` (`contact-section.md` for fields/messages, `contact-section-two.md` for title and address) |
+| `/contact-us/` | One: contact form | `ContactForm.astro` via `ContactSectionTwo`, plus `ContactMapSection` |
+| `/blog/`, `/blog/post-1/` | **None.** The only `<form>` is the blog search box (`#search`, `Search.astro`), not a lead form (this corrects the earlier note in Section 10.1 item 5) | n/a |
+| `/about-us/`, `/services/`, six HVAC service pages, `/services/alternative-services/`, `/services/hero-alternatives/`, privacy, terms, 404 | None | n/a |
+
+**B. Hero form (V unless marked C)**
+- Fields: `fullName` text, required; `phone` tel, required; `email` email, **required in the current code** (the plan's D03 suggests email optional: a decision for P0.4/P2.1); `services` hidden input, required, filled by the multi-select. Hidden: `_subject` = "New HVAC service request", `_template` = "table". There is **no page/source field** in the payload.
+- Service options (6): AC Repair, Heating Repair, HVAC Installation, Preventive Maintenance, Indoor Air Quality, Emergency HVAC Service.
+- **Multi-select (V):** the button opens a checkbox panel. Ticking boxes writes one text value, joined with a comma and a space, e.g. `AC Repair, HVAC Installation, Indoor Air Quality`. The button label shows the names for 1 to 2 picks and "3 services selected" for 3 or more. Unticking everything empties the value. Arrow, Enter, Space and Escape keyboard handling exists in code (C).
+- Validation (V): empty submit is blocked with the browser's required-field notices and "Please complete all required fields."; a bad email gets the browser's message; valid fields with no service shows "Select at least one service." Nothing was sent in any case.
+- Submit behaviour (**C, not run**): posts JSON to `https://formsubmit.co/ajax/temp.gats@gmail.com` (placeholder). While sending it shows "Submitting your service request..." and disables the button. Success only if the reply says `success: "true"`, then "Thank you. Your service request has been received." and the form resets. `success: "false"` shows the reply's own message. A network failure shows a hard-coded "Oops! There was a problem submitting your form." (not the error text in the content file). Code observations to keep in mind later: the abort message promises an "alternative server" but none is implemented; a reply that is neither `"true"` nor `"false"` would leave the button disabled with no result message; the unused Formspree path would show a success-style message on failure.
+
+**C. Contact form (V unless marked C)**
+- Fields: Name (text, required); Email (email, required); Estimated budget (number); Preferred start date (date); Service interest (searchable dropdown over a native select, required, 5 options: Web & Mobile App Development, Cloud Infrastructure, Cybersecurity Review, Data Tracking & Analytics, Automation Workflow); Project type (radios: New project [default], Improve existing system); Preferred contact (checkboxes: Email [default ticked], Phone); Message (textarea, required); Consent ("I agree to be contacted about this request.", required). Hidden: `_subject` = "New form submission from your website", `_template` = "table". Field names are capitalised with spaces (`Start Date`, `Project Type`), unlike the hero's camelCase names: the two forms do not share a field contract today.
+- It has **no phone-number field**, although "Phone" is offered as a preferred contact method. No source/page field.
+- Validation (V): an empty submit flags Name, Email, Service, Message and Consent with the browser's messages; a bad email is flagged; nothing was sent.
+- Submit/success/error (**C, not run**): same endpoint and function as the hero. Success text from content: "Thank you. We received your request and will reply with useful next steps." Failure shows the error text followed by the fallback message.
+
+**D. Request buttons on the six HVAC service pages (V: link lists read from each page; click-through checked on `service-02`)**
+- Pages (content → page): `service-01.mdx` is served at `/services/service-custom-slug/` (AC Repair); `service-02` Heating Repair; `service-03` HVAC Installation; `service-04` Preventive Maintenance; `service-05` Indoor Air Quality; `service-06` Emergency HVAC Service. None of the six pages contains a form.
+- Every request/schedule button on all six pages (4 to 5 per page, e.g. "Request AC Repair", "Request Heating Repair", "Request an Estimate", "Schedule Maintenance", "Explore Air Quality Options" / "Request an Air Quality Consultation", "Request HVAC Service", plus a final "Schedule …" button) links to `/#contact`, i.e. the **homepage contact section and its IT-style contact form**, not the hero form and not `/contact-us/`. The sidebar buttons are hard-coded in `src/pages/[...lang]/services/[single].astro`; the final buttons come from the `*-final-cta.md` files.
+- Click-through: on the **production build**, opening `/#contact` from `service-02` scrolled to the contact section (V). On the **dev server** the page changed to `/#contact` but did **not** scroll (V, 3 tries); the cause is unknown and the production result is the one that matters. The Services menu on each page also links to the Emergency page.
+- Extra phone link: the Heating and Emergency pages show "857-123-4567" (`service-emergency-cta-section.md`), which differs from the header number.
+- Nothing in either form records which page or button the visitor came from (relevant to P3.4).
+
+**E. Design baseline (V on desktop 1440 px and about 1024 px, tablet 768 px, mobile 375 px; no horizontal overflow, see Section 10.1)**
+- Type: Sora 400/500/700 for body and most headings; Montserrat 800 for the hero headline (`src/config/fonts.json`). Body 14 px, colour `#585B6F` on white; hero H1 about 44 px and H2 about 39 px at a 1024 px window; H2 colour `#0A165E`.
+- Colour tokens (`src/styles/theme.css`): primary `#2B4DFF`, primary-soft `#EEF1FF`, heat-accent `#FF6A3D`, accent `#E3FF04`, theme-dark `#040D43`, theme-light `#F5F6F7`, dark `#0A165E`, border-light `#E5E5E5`; breakpoints 540 / 768 / 1024 / 1320 px. Primary button: `#2B4DFF` fill, white text, 7 px radius.
+- Homepage order (V): hero with trust banner, checklist and estimate-form card; services carousel (HVAC photos); Repair or Replace (dark/light cards); Why Homeowners Choose; "HVAC Service Made Simple" (3 illustrated steps); testimonial band (dark navy carousel); FAQ accordion; service area (town list + map); contact section; blog cards; footer. On mobile the hero form, carousels and contact form all fit the screen.
+- Entrance fade-in animations: screenshots taken in the first couple of seconds look washed out; wait about 3 s.
+- Images: HVAC photo sets under `src/assets/images/hvac/`; hero photo `public/images/alternative-hero-hvac.jpg`; blog and gallery images are IT-themed.
+- **Reusable pieces to preserve (C from imports, V in render):** `AlternativeHeroSection` + `AlternativeHeroForm`, `ContactSectionTwo` + `ContactForm`, `TestimonialQuoteSection`, `ServicesSection`, `RepairVsReplacementSection`, `HomeownerTrustSection`, `WorkingProcessSection`, `HomepageFaqSection` / `FaqSection`, `HomepageServiceAreaShowcaseSection` / `ServiceAreaSection`, `Service*` sections (options, benefits, trust, emergency CTA), `CallToAction`, `PageHeader`, `ServicesSingle`, `Button.astro`, `DynamicIcon.astro`.
+
+**F. Master trust indicators and testimonials (baseline, V): preserve** (reference baseline for the regression check in P9.4)
+- Hero trust banner (`alternative-hero-section.md`, `trustBanner`): "5.0 Rating", "200+ Reviews", "Licensed & Insured" visible on the homepage at desktop, tablet and mobile.
+- Testimonials (`testimonial.md`, `TestimonialQuoteSection`): carousel viewed on the homepage at desktop (Brooklyn Simmons, Lead Developer), tablet (Sarah Jones, Head of Engineering) and mobile (Michael Thompson, CEO). The quotes are generic IT-business text. Also on the six HVAC service pages (text match only, not viewed).
+
+**G. Brand, contact and SEO inventory (V for rendered values, C for file search)**
+
+*Master demo values to keep (editable):* the three trust indicators and testimonials above; the HVAC/Boston demo copy on the hero, service pages, FAQ and service-area sections. **Decision made 2026-10-14: "BlueFlame Heating & Air" is the approved master placeholder; keep it and make it easy to replace per client (P10.1).** Background: "BlueFlame Heating & Air" appears as the demo HVAC brand in about 25 files (service pages, trust sections, final CTAs, why-choose-us, service area) and is also hard-coded in `ServiceTrustSection.astro` and `[single].astro`; `CLAUDE.md` says to avoid hardcoded brand names in reusable content.
+
+*Outdated IT-template content to clean up later (not changed):*
+
+| Item | Where | What it says now |
+|---|---|---|
+| Site name, tagline, description, logo text | `src/config/config.toml` | "Techlo Lite", "Free IT Solutions & Services Astro & Tailwind CSS Theme", IT-theme description, logo text "Techlo" |
+| Page titles | every page (V) | "<Page> - Free IT Solutions & Services Astro & Tailwind CSS Theme" |
+| Domain / canonical / OG URL | `config.toml` `baseUrl` (V on every page) | `https://techlo-lite-astro.pages.dev/`; all pages say `index, follow` |
+| SEO author and keywords | `config.toml` `[seo]` | "Getastrothemes", astro/IT-theme keywords |
+| Homepage meta description | `src/content/homepage/english/-index.md` (V) | "Build reliable technology with We through expert IT strategy, software engineering, and support." |
+| `/services/` meta description | (V) | "Browse our IT services, including app development, cybersecurity, cloud, automation, and support." |
+| `/blog/` meta description and content | (V) | software/cloud/cybersecurity text; IT-themed posts and photos |
+| `/services/alternative-services/`, `/services/hero-alternatives/` | (V) | IT demo pages with IT meta description |
+| Header/footer contact | `config.toml` | phone 518-564-3200, `hello@example.com`, "1791 Yorkshire Circle Kitty Hawk, NC 279499" |
+| Contact section address | `contact-section-two.md` (V) | "1800 Market Street, Suite 420, San Francisco, CA 94103", "+1 415 555 2300", `hello@example.com` |
+| Emergency phone | `service-emergency-cta-section.md` (V) | 857-123-4567 (three different phone numbers on the site) |
+| Contact section copy | `contact-section-two.md` (V) | "Let's build an awesome project together" and IT-project wording |
+| Contact form | `contact-section.md` (V) | Budget, start date, project type, IT service dropdown (see C) |
+| Footer (V, desktop) | footer content | "Let's work together" / "Let's Start a Project" CTA, IT description, links UI/UX Design, App Development, Digital Marketing, Web Development, Cyber Security, "Careers", "Copyright 2026 Your Company" |
+| Homepage headings (V) | services and blog sections | "Our awesome services to give you success", "Recent blog & articles about technology" |
+| Form destination | `config.toml` | `https://formsubmit.co/temp.gats@gmail.com` (placeholder) |
+| Other "Techlo" strings | `Head.astro`, `FaqSection.astro`, `HomepageFaqSection.astro`, `BackToTop.astro`, `GlobalScripts.astro`, `Accordion.astro`, `site.webmanifest`, `wrangler.toml`, `package.json` | found by file search only; **not checked** whether any is visible to visitors (some may be internal names) |
+
+**Not covered by this inventory:** a line-by-line read of every content file (About page, FAQ answers, privacy/terms, blog posts), which belongs to P9.4. Tablet width was reviewed on the homepage only.
 
 **Repository protection reminder:** Never push, merge, deploy, or update this plan in the original `techlo-astro-MASTER-Dupe-2`. Only the working `astro-MASTER-flyio` is in scope.
 
