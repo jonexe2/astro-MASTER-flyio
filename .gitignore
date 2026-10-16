@@ -18,9 +18,15 @@ pnpm-lock.yaml
 pnpm-workspace.yaml
 
 
-# environment variables
+# environment variables (private; only .env.example is committed)
 .env
-.env.production
+.env.*
+!.env.example
+
+# local development databases
+.data/
+*.sqlite
+*.sqlite-*
 
 # macOS-specific files
 .DS_Store
