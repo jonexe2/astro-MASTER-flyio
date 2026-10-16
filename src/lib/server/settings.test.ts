@@ -45,10 +45,41 @@ test("database file must end with .sqlite", () => {
   assert.equal(codeOf(() => resolveDatabasePath({ APP_ENV: "production", DATABASE_PATH: "/data/leads.db" }, cwd)).code, "SETTINGS_DATABASE_PATH");
 });
 
-test("production requires an absolute path inside /data", () => {
-  assert.equal(resolveDatabasePath({ APP_ENV: "production", DATABASE_PATH: "/data/leads.sqlite" }, cwd).path, "/data/leads.sqlite");
-  for (const env of [{}, { DATABASE_PATH: "" }, { DATABASE_PATH: ".data/dev.sqlite" }, { DATABASE_PATH: "/tmp/leads.sqlite" }, { DATABASE_PATH: "data/leads.sqlite" }]) {
-    assert.equal(codeOf(() => resolveDatabasePath({ APP_ENV: "production", ...env }, cwd)).code, "SETTINGS_DATABASE_PATH");
+const production = (DATABASE_PATH?: string) => resolveDatabasePath({ APP_ENV: "production", DATABASE_PATH }, cwd).path;
+
+test("production accepts normal absolute paths inside /data", () => {
+  assert.equal(production("/data/leads.sqlite"), "/data/leads.sqlite");
+  assert.equal(production("/data/sub/dir/leads.sqlite"), "/data/sub/dir/leads.sqlite");
+  assert.equal(production("/data//leads.sqlite"), "/data/leads.sqlite");
+  assert.equal(production("/data/./leads.sqlite"), "/data/leads.sqlite");
+  assert.equal(production("/data/a/../leads.sqlite"), "/data/leads.sqlite"); // stays inside /data
+});
+
+test("production rejects missing, relative, outside and traversal paths", () => {
+  const bad = [
+    undefined, "", ".data/dev.sqlite", "data/leads.sqlite", "/tmp/leads.sqlite",
+    "/data/../tmp/leads.sqlite", "/data/a/../../tmp/leads.sqlite", "/data/a/b/../../../leads.sqlite",
+    "/data/../data/../etc/x.sqlite", "/data/..", "/data/../leads.sqlite", "/datax/leads.sqlite",
+    "/data", "/data/", "/data/.sqlite/..", "//data/leads.sqlite/../../x.sqlite",
+  ];
+  for (const value of bad) {
+    assert.equal(codeOf(() => production(value)).code, "SETTINGS_DATABASE_PATH", String(value));
+  }
+});
+
+test("production rejects Windows-style, backslash and NUL paths", () => {
+  for (const value of ["C:\\data\\leads.sqlite", "C:/data/leads.sqlite", "\\data\\leads.sqlite", "/data\\..\\tmp\\x.sqlite", "/data/leads.sqlite\0.txt"]) {
+    assert.equal(codeOf(() => production(value)).code, "SETTINGS_DATABASE_PATH", JSON.stringify(value));
+  }
+});
+
+test("production requires the .sqlite extension", () => {
+  assert.equal(codeOf(() => production("/data/leads.db")).code, "SETTINGS_DATABASE_PATH");
+});
+
+test("rejection messages never contain the submitted path", () => {
+  for (const value of ["/data/../tmp/hidden-name.sqlite", "C:\\hidden-name\\x.sqlite", "/hidden-name/x.sqlite"]) {
+    assert.ok(!codeOf(() => production(value)).message.includes("hidden-name"));
   }
 });
 

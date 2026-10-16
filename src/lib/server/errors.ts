@@ -1,11 +1,15 @@
 import "./server-only.ts";
 
 // Convention for backend errors:
-// - Throw ServerError for problems we expect (bad settings, failed save). Its
-//   message must be safe to print: say WHAT is wrong and HOW to fix it, and never
-//   include setting values, credentials or anything a customer submitted.
-// - Anything else is "unexpected". We log only its name (and, in development, a
-//   short message). We never log request bodies, form data, env values or `cause`.
+// - Throw ServerError for problems we expect (bad settings, failed save). Give it a
+//   constant CODE and a PREDEFINED message that says what is wrong and how to fix it.
+//   Never build the message from setting values, credentials or anything a customer
+//   submitted.
+// - Anything else is "unexpected". We log only that it happened and where. Raw error
+//   messages, error names, stacks, `cause`, request bodies and env values are never
+//   logged, even in development: libraries put emails, form values and credentials
+//   in messages. To diagnose one, reproduce it locally with a debugger, or catch it
+//   at the failing call site and throw a ServerError with a predefined message.
 // - Never return error details to the browser; return a generic message.
 
 export class ServerError extends Error {
@@ -18,17 +22,17 @@ export class ServerError extends Error {
   }
 }
 
-const MAX_DEV_MESSAGE = 200;
+// `scope` should be a constant such as "leads"; anything else is replaced.
+const SAFE_LABEL = /^[A-Za-z0-9:_-]{1,40}$/;
 
-export const formatError = (scope: string, error: unknown, isDevelopment: boolean): string => {
-  if (error instanceof ServerError) return `[${scope}] ${error.code}: ${error.message}`;
-  const name = error instanceof Error ? error.name : "NonError";
-  if (!isDevelopment || !(error instanceof Error)) {
-    return `[${scope}] UNEXPECTED: ${name} (details hidden)`;
+export const formatError = (scope: string, error: unknown): string => {
+  const where = SAFE_LABEL.test(scope) ? scope : "unknown";
+  if (error instanceof ServerError && SAFE_LABEL.test(error.code)) {
+    return `[${where}] ${error.code}: ${error.message}`;
   }
-  return `[${scope}] UNEXPECTED: ${name}: ${error.message.slice(0, MAX_DEV_MESSAGE)}`;
+  return `[${where}] UNEXPECTED: details hidden`;
 };
 
-export const logServerError = (scope: string, error: unknown, isDevelopment: boolean): void => {
-  console.error(formatError(scope, error, isDevelopment));
+export const logServerError = (scope: string, error: unknown): void => {
+  console.error(formatError(scope, error));
 };

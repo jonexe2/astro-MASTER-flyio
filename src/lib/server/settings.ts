@@ -1,5 +1,5 @@
 import "./server-only.ts";
-import { resolve } from "node:path";
+import { posix, resolve } from "node:path";
 import { ServerError } from "./errors.ts";
 
 // Private settings come from environment variables (see .env.example), never from
@@ -24,11 +24,22 @@ export const readAppEnv = (env: Env): AppEnv => {
   );
 };
 
-// Normalize for comparison only: forward slashes, no Windows drive letter.
-const comparable = (path: string) => path.replace(/\\/g, "/").replace(/^[A-Za-z]:/, "");
+// Development check: is this path inside the production data directory? Compared
+// after lexical normalization (collapses "." and ".."), with forward slashes and
+// no Windows drive letter, so "/tmp/../data/x" and "C:\data\x" are both caught.
 const inProductionDataDir = (path: string) => {
-  const p = comparable(path);
+  const p = posix.normalize(path.replace(/\\/g, "/").replace(/^[A-Za-z]:/, ""));
   return p === PRODUCTION_DATA_DIR || p.startsWith(`${PRODUCTION_DATA_DIR}/`);
+};
+
+// Production check: an absolute POSIX path that stays inside /data/ after lexical
+// normalization. Rejects backslashes, drive letters, NUL and any ".." escape.
+// Limit: this is lexical only. A symbolic link inside /data that points elsewhere
+// is not detected; the contents of the volume are controlled by the deployment (P8).
+const productionPath = (configured: string): string | undefined => {
+  if (configured.includes("\\") || configured.includes("\0") || !configured.startsWith("/")) return undefined;
+  const normalized = posix.normalize(configured);
+  return normalized.startsWith(`${PRODUCTION_DATA_DIR}/`) ? normalized : undefined;
 };
 
 // The only way server code should obtain the SQLite file location (used from P2.2).
@@ -43,16 +54,17 @@ export const resolveDatabasePath = (env: Env, cwd: string = process.cwd()) => {
     if (!configured) {
       throw new ServerError("SETTINGS_DATABASE_PATH", "DATABASE_PATH is required when APP_ENV=production.");
     }
-    if (!comparable(configured).startsWith("/") || !inProductionDataDir(configured)) {
+    const path = productionPath(configured);
+    if (!path) {
       throw new ServerError(
         "SETTINGS_DATABASE_PATH",
-        `In production, DATABASE_PATH must be an absolute path inside ${PRODUCTION_DATA_DIR}/.`,
+        `In production, DATABASE_PATH must be an absolute POSIX path inside ${PRODUCTION_DATA_DIR}/ (no "..", no backslashes or drive letters).`,
       );
     }
-    if (!configured.endsWith(".sqlite")) {
+    if (!path.endsWith(".sqlite")) {
       throw new ServerError("SETTINGS_DATABASE_PATH", "DATABASE_PATH must end with .sqlite.");
     }
-    return { appEnv, path: configured };
+    return { appEnv, path };
   }
 
   const raw = configured || DEV_DEFAULT_DATABASE_PATH;
