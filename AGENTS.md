@@ -105,6 +105,14 @@ marquee:
 - Both lead forms use one backend handler (planned: `src/lib/server/leads/handler.ts`). Do not write per-form storage logic.
 - Tests sit next to the code as `*.test.ts` and run with `npm test` (Node's built-in test runner; no test dependency). Keep them out of `src/pages/`.
 
+## Database (SQLite)
+
+- All database access goes through `src/lib/server/db/` (built-in `node:sqlite`, Node >= 24.15). Server code gets the connection from `getDatabase()`; the file location comes only from `resolveDatabasePath()` in `settings.ts`.
+- Schema changes are migrations in `src/lib/server/db/migrations/`, listed in order in `index.ts`. They are forward-only: add a new file; never edit, reorder or remove a merged migration (a stored checksum refuses edited ones).
+- The runner applies all pending migrations in one transaction, so migration SQL must not contain `BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`, `VACUUM`, `PRAGMA journal_mode` or `PRAGMA foreign_keys`.
+- Leads are only ever inserted: never `INSERT OR REPLACE` or upsert a lead. Use parameters for every value; never build SQL from submitted text.
+- Database tests use temporary files and synthetic records only; never `.env`, `.data/dev.sqlite` or a real database. `npm run db:migrate` creates or updates the local database.
+
 ## Verification
 
 - Run `npm test` after changing backend code.

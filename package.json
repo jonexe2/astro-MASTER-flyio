@@ -18,10 +18,11 @@
     "remove-draft-from-sitemap": "node ./scripts/remove-draft-from-sitemap.mjs",
     "format": "prettier -w ./src",
     "deploy:cf": "wrangler pages deploy",
-    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\""
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
+    "db:migrate": "node --experimental-strip-types --env-file-if-exists=.env src/lib/server/db/migrate-cli.ts"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.15.0"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.2",
