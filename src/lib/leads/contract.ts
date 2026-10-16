@@ -33,7 +33,7 @@ export interface LeadRecord {
   fullName: string;
   phone: string; // text as typed, never a number
   email: string; // case kept as typed
-  services: string[]; // JSON list in the database; any valid label, see LEAD_CONTRACT.md
+  services: [string, ...string[]]; // at least one; JSON list in the database; any valid label, see LEAD_CONTRACT.md
   message: string | null; // null when not given; never ""
   submissionKey: string | null; // lowercase UUID from the form script; unique when present
 }
