@@ -18,7 +18,7 @@
     "remove-draft-from-sitemap": "node ./scripts/remove-draft-from-sitemap.mjs",
     "format": "prettier -w ./src",
     "deploy:cf": "wrangler pages deploy",
-    "test": "node --test \"src/**/*.test.ts\""
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\""
   },
   "engines": {
     "node": ">=22.12.0"

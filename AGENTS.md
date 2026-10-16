@@ -98,7 +98,8 @@ marquee:
 
 ## Backend (server-only code)
 
-- Server-only TypeScript lives in `src/lib/server/`. Start each module with `import "./server-only.ts";`.
+- Server-only TypeScript lives in `src/lib/server/`. Start each module with an import of `src/lib/server/server-only.ts` using the path relative to that module (`"./server-only.ts"` in `src/lib/server/`, `"../server-only.ts"` in `src/lib/server/leads/`, and so on). The guard itself and `*.test.ts` files are exempt.
+- The guard only throws if server code runs in a browser; it does not stop code or secrets from being shipped in downloaded JavaScript. The import rule below, `boundaries.test.ts` and the build-output scan do that. Never put secrets in code the browser can load.
 - Only `src/pages/` (endpoints, on-demand pages) and `src/lib/server/` may import it; never from components, widgets, `<script>` blocks or `src/lib/utils/`. `src/lib/server/boundaries.test.ts` enforces this.
 - Code shared with the browser (for example the lead contract in `src/lib/leads/contract.ts`) must contain no secrets or Node APIs and must not import from `src/lib/server/`.
 - Both lead forms use one backend handler (planned: `src/lib/server/leads/handler.ts`). Do not write per-form storage logic.

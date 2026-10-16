@@ -20,7 +20,7 @@ export interface LeadSubmission {
   fullName: string; // required
   phone: string; // required
   email: string; // required
-  services: HvacService[]; // required, at least one
+  services: [HvacService, ...HvacService[]]; // required, at least one (checked at runtime in P3.1)
   message?: string; // optional (longer form only)
 }
 
