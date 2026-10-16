@@ -96,8 +96,17 @@ marquee:
 - Keep content editable through `.md` or `.mdx` files.
 - Do not leave placeholders like "Lorem ipsum" unless an existing file already uses placeholder content intentionally.
 
+## Backend (server-only code)
+
+- Server-only TypeScript lives in `src/lib/server/`. Start each module with `import "./server-only.ts";`.
+- Only `src/pages/` (endpoints, on-demand pages) and `src/lib/server/` may import it; never from components, widgets, `<script>` blocks or `src/lib/utils/`. `src/lib/server/boundaries.test.ts` enforces this.
+- Code shared with the browser (for example the lead contract in `src/lib/leads/contract.ts`) must contain no secrets or Node APIs and must not import from `src/lib/server/`.
+- Both lead forms use one backend handler (planned: `src/lib/server/leads/handler.ts`). Do not write per-form storage logic.
+- Tests sit next to the code as `*.test.ts` and run with `npm test` (Node's built-in test runner; no test dependency). Keep them out of `src/pages/`.
+
 ## Verification
 
+- Run `npm test` after changing backend code.
 - Run `npm run astro-check` after code or schema changes.
 - Run `npm run build` for broad theme changes, content collection changes, or anything that affects routing/assets.
 - Do not commit generated output such as `dist/`.
