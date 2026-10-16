@@ -17,7 +17,8 @@
     "remove-multilingual": "node ./scripts/remove-multilingual.mjs",
     "remove-draft-from-sitemap": "node ./scripts/remove-draft-from-sitemap.mjs",
     "format": "prettier -w ./src",
-    "deploy:cf": "wrangler pages deploy"
+    "deploy:cf": "wrangler pages deploy",
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\""
   },
   "engines": {
     "node": ">=22.12.0"
