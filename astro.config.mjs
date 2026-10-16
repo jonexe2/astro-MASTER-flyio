@@ -1,4 +1,5 @@
 import mdx from "@astrojs/mdx";
+import node from "@astrojs/node";
 import remarkToc from "remark-toc";
 import { unified } from "@astrojs/markdown-remark";
 import sitemap from "@astrojs/sitemap";
@@ -22,6 +23,9 @@ let {
 
 // https://astro.build/config
 export default defineConfig({
+  // Output stays "static": every page is prerendered at build time. Only routes
+  // that export `prerender = false` run on the Node server.
+  adapter: node({ mode: "standalone" }),
   site: config.site.baseUrl ? config.site.baseUrl : "http://examplesite.com",
   trailingSlash: config.site.trailingSlash ? "always" : "never",
   devToolbar: {

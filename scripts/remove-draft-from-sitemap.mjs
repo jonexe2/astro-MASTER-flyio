@@ -12,7 +12,10 @@ const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
 // --------- Paths (absolute) ----------
-const DIST_FOLDER = path.resolve(PROJECT_ROOT, "dist");
+const BUILD_FOLDER = path.resolve(PROJECT_ROOT, "dist");
+// With the Node adapter, prerendered files (including the sitemap) are written
+// to dist/client; without an adapter they are written to dist.
+const CLIENT_FOLDER = path.resolve(BUILD_FOLDER, "client");
 const CONTENT_FOLDER = path.resolve(PROJECT_ROOT, "src", "content");
 const LANG_FILE = path.resolve(PROJECT_ROOT, "src", "config", "language.json");
 const ASTRO_CONFIG_FILE = path.resolve(
@@ -167,19 +170,23 @@ function buildExcludedFolders(config) {
   return ["widgets", "sections", "author", ...fromConfig];
 }
 
-async function getSitemapFiles() {
-  const files = await fs.readdir(DIST_FOLDER);
+async function getOutputFolder() {
+  return (await pathExists(CLIENT_FOLDER)) ? CLIENT_FOLDER : BUILD_FOLDER;
+}
+
+async function getSitemapFiles(outputFolder) {
+  const files = await fs.readdir(outputFolder);
   return files
     .filter((f) => SITEMAP_FILE_PATTERN.test(f))
-    .map((f) => path.join(DIST_FOLDER, f));
+    .map((f) => path.join(outputFolder, f));
 }
 
 // ---------------- Main ----------------
 async function processSitemaps() {
   try {
-    if (!(await pathExists(DIST_FOLDER))) {
+    if (!(await pathExists(BUILD_FOLDER))) {
       console.error(
-        `❌ The 'dist' folder was not found at '${DIST_FOLDER}'.\n` +
+        `❌ The 'dist' folder was not found at '${BUILD_FOLDER}'.\n` +
           `   Run your build first (e.g., npm run build).`,
       );
       process.exitCode = 1;
@@ -196,7 +203,19 @@ async function processSitemaps() {
 
     const EXCLUDE_FOLDERS = buildExcludedFolders(config);
 
-    const sitemapFiles = await getSitemapFiles();
+    const outputFolder = await getOutputFolder();
+    const sitemapFiles = await getSitemapFiles(outputFolder);
+
+    // A missing sitemap used to be silently reported as success, which hid the
+    // fact that no draft pages were being removed. Fail loudly instead.
+    if (config?.seo?.sitemap?.enable && sitemapFiles.length === 0) {
+      console.error(
+        `❌ Sitemap is enabled but no sitemap-N.xml file was found in '${outputFolder}'.`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+
     const contentFrontmatter = await getContentFrontmatter();
 
     // Precompute excluded/draft URLs from content
