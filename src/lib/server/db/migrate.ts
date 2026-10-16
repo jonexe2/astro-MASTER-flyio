@@ -4,7 +4,10 @@ import type { DatabaseSync } from "node:sqlite";
 import { ServerError } from "../errors.ts";
 import { MIGRATIONS, type Migration } from "./migrations/index.ts";
 
-export const migrationChecksum = (sql: string) => createHash("sha256").update(sql).digest("hex");
+// Line endings are normalized so a Windows checkout (CRLF) and a Linux one (LF)
+// give the same checksum for the same migration.
+export const migrationChecksum = (sql: string) =>
+  createHash("sha256").update(sql.replace(/\r\n?/g, "\n")).digest("hex");
 
 // SQLITE_BUSY (5) and its extended codes: another connection holds the lock.
 export const isBusyError = (error: unknown) =>

@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { ServerError } from "../errors.ts";
 import { openDatabase } from "./connection.ts";
+import { migrationChecksum } from "./migrate.ts";
 import { MIGRATIONS, type Migration } from "./migrations/index.ts";
 
 // Temporary databases with synthetic records only; never .env or a real database.
@@ -161,6 +162,17 @@ test("an edited migration or a database newer than the code is refused", (t) => 
   assert.equal(errorCode(() => open(t, path, edited)), "DB_MIGRATION_MISMATCH");
   assert.equal(errorCode(() => open(t, path, MIGRATIONS)), "DB_MIGRATION_MISMATCH");
   assert.deepEqual(snapshot(path), before);
+});
+
+test("the checksum ignores CRLF vs LF line endings but not real edits", (t) => {
+  const sql = "CREATE TABLE a (x TEXT);\nCREATE TABLE b (y TEXT);\n";
+  assert.equal(migrationChecksum(sql.replaceAll("\n", "\r\n")), migrationChecksum(sql));
+  assert.notEqual(migrationChecksum(`${sql}-- edited\n`), migrationChecksum(sql));
+  // A database created from an LF checkout opens with the CRLF spelling of the same migrations.
+  const path = tempPath(t);
+  open(t, path).close();
+  const crlf = MIGRATIONS.map((m) => ({ ...m, sql: m.sql.replace(/\r?\n/g, "\r\n") }));
+  open(t, path, crlf).close();
 });
 
 test("a migration list with gaps is refused before touching the database", (t) => {
