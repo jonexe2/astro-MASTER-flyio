@@ -50,7 +50,7 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 
 ### 2.1 Confirmed by the October 13 GitHub inspections
 
-**Active target:** `jonexe2/astro-MASTER-flyio` on `main` (tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`). The current target contains the inspected source files and components listed below. The full histories were not compared file by file.
+**Active target:** `jonexe2/astro-MASTER-flyio` on `main` (tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`). The current target contains the inspected source files and components listed below.
 
 *Historical context (2026-10-13):* this assessment is **source-code inspection**, not a successful local build, browser test, or production test. The 2026-10-14 P0.3 baseline (Section 10.1) has since run the local install, checks, build and browser review; the table below is preserved as originally written. Recheck the working repository before any changes.
 
