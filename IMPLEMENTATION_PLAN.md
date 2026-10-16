@@ -2,14 +2,13 @@
 ## Premium HVAC Website, Lead Capture, and Private Owner Dashboard
 
 **Working repository:** [`jonexe2/astro-MASTER-flyio`](https://github.com/jonexe2/astro-MASTER-flyio)  
-**Protected original repository:** [`jonexe2/techlo-astro-MASTER-Dupe-2`](https://github.com/jonexe2/techlo-astro-MASTER-Dupe-2) — reference only; **do not change its files, branches, settings, or deployments**.  
 **Default branch:** `main`  
 **Plan created:** October 13, 2026  
-**Assessment basis:** Working repository `main` tree at `3dac95ba0467d6e2339b98d5c7c71460e948c022` (checked October 13, 2026), selected source files including the hero trust banner and testimonial content, plus the earlier original-repository assessment and project requirements. *(Historical, as of 2026-10-13: local build/browser behavior was untested at that time. It was tested on 2026-10-14; see Section 10.1.)*  
+**Assessment basis:** Working repository `main` tree at `3dac95ba0467d6e2339b98d5c7c71460e948c022` (checked October 13, 2026), selected source files including the hero trust banner and testimonial content, plus project requirements. *(Historical, as of 2026-10-13: local build/browser behavior was untested at that time. It was tested on 2026-10-14; see Section 10.1.)*  
 **Project status:** Phase 1 in progress. The P1.1a dependency security upgrade (PR #1) and the security audit follow-up (PR #2) are both merged into `main` (GitHub-confirmed; `main` at `86217155e79b0bfe95fd5335d84e8a2067476f2f`). P1.1b (Astro Node server foundation) is **implemented and verified locally on branch `phase-1/p1-1b-node-server-foundation` (Section 10.6); owner-approved 2026-10-15 and committed locally as `b7ec83a`; not pushed, no pull request yet**. No database, authentication, dashboard, form-submission or integration work has started.  
 **Current phase:** Phase 0 is complete (P0.1 to P0.4, 2026-10-14). Phase 1 is in progress: **P1.1a (dependency security upgrade) was merged into `main` through GitHub PR #1 (merge commit `a4bf69f`, 2026-10-15)**; results are in Section 10.4. The security audit follow-up (Section 10.5) was **merged into `main` through GitHub PR #2 (https://github.com/jonexe2/astro-MASTER-flyio/pull/2); `main` is now at merge commit `86217155e79b0bfe95fd5335d84e8a2067476f2f`** (GitHub-confirmed by the owner; local `main` fast-forwarded to it and verified on 2026-10-15). **P1.1b (Astro Node server foundation) is implemented and verified locally on branch `phase-1/p1-1b-node-server-foundation`, approved by the owner on 2026-10-15 and committed locally as `b7ec83a` (not pushed, no pull request yet; Section 10.6); its P1.1 checklist boxes are ticked with local evidence, and the owner accepted the 8 remaining audit findings for now. P1.1b is not called complete until it is pushed, reviewed in a pull request and merged into `main`.** All other backend work has not started.  
 **Next recommended task:** when the owner asks for it, push branch `phase-1/p1-1b-node-server-foundation` and open a pull request against `main` for P1.1b (already approved and committed locally as `b7ec83a`). **Do not start P1.2** until P1.1b is merged and the owner approves starting it. **The owner accepted the 8 remaining `npm audit` findings on 2026-10-15 "for now" (Sections 10.5 and 10.6; all build/dev tooling, none present in a runtime-only install, none fixable without overrides, downgrades or code changes); the audit must still be re-run at the start of each phase, after any dependency change and before any production deployment.**  
-**Scope of this document:** Development roadmap and progress tracker. This revision only updates the plan, not repository code or deployments. The original repository is not to be modified.
+**Scope of this document:** Development roadmap and progress tracker. This revision only updates the plan, not repository code or deployments.
 
 > **How to use this plan:** Work through one small task at a time. A checked box (`- [x]`) means the action was actually performed and verified. An unchecked box (`- [ ]`) means it is still pending. An existing file is not proof a feature works. After each development session, update the status table, completed checklist items, test evidence, blockers, and next task. Do not check off untested work.
 
@@ -34,7 +33,7 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 
 **Non-negotiable rules**
 
-- Perform development, testing, commits and deployments against **`jonexe2/astro-MASTER-flyio` only**. Never use `jonexe2/techlo-astro-MASTER-Dupe-2` as the working repository or accidentally push back to it. Verify the Git remote before any push.
+- Perform development, testing, commits and deployments against **`jonexe2/astro-MASTER-flyio` only**. Verify the Git remote before any push.
 - Preserve the `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` trust banner and all existing testimonial content/components in the **master template**. Do not strip them during SEO cleanup, backend implementation, rebranding, or performance changes.
 - These are **reusable demo/template values**, not independently verified statements about any real client. On a real client’s public production site, substitute verified details or hide the relevant claim in that client’s configuration until substantiated; **do not delete it from the master**.
 - Preserve existing pages, layouts, responsive behavior, and approved design. Make visual changes only to fix a confirmed issue or with approval.
@@ -51,7 +50,7 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 
 ### 2.1 Confirmed by the October 13 GitHub inspections
 
-**Active target:** `jonexe2/astro-MASTER-flyio` on `main` (tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`). The current target contains the inspected source files and components listed below. The earlier detailed inspection of `techlo-astro-MASTER-Dupe-2` is historical context only, not the repository to implement against. The full histories were not compared file by file.
+**Active target:** `jonexe2/astro-MASTER-flyio` on `main` (tree `3dac95ba0467d6e2339b98d5c7c71460e948c022`). The current target contains the inspected source files and components listed below. The full histories were not compared file by file.
 
 *Historical context (2026-10-13):* this assessment is **source-code inspection**, not a successful local build, browser test, or production test. The 2026-10-14 P0.3 baseline (Section 10.1) has since run the local install, checks, build and browser review; the table below is preserved as originally written. Recheck the working repository before any changes.
 
@@ -74,7 +73,7 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 | Master trust banner | `src/content/sections/english/alternative-hero-section.md` includes exactly **“5.0 Rating”**, **“200+ Reviews”**, and **“Licensed & Insured”**. | **Keep all three in the master template.** For a real client deployment, use verified values or hide only in the client copy until valid; do not remove master placeholders. |
 | Master testimonials | `src/layouts/components/sections/TestimonialQuoteSection.astro` renders testimonial content from `src/content/sections/english/testimonial.md`; homepage includes the section. Content currently includes generic sample IT-business quotes. | **Preserve the existing testimonial section, its content, and its appearance in the master.** For client-specific live websites, replace with authentic approved customer testimonials or hide just in the client copy if none are available. |
 | Older deployment configs | Root contains `netlify.toml`, `vercel.json`, `wrangler.toml`. | Determine which are historical; don't delete them before checking their purpose. |
-| Plan file | `IMPLEMENTATION_PLAN.md` was not found on the new working repository’s `main` during this revision. *(Historical: the plan was later added in commit `de67f59`.)* | Add this revised file to `astro-MASTER-flyio` only when explicitly requested; never upload it to the protected original by accident. |
+| Plan file | `IMPLEMENTATION_PLAN.md` was not found on the new working repository’s `main` during this revision. *(Historical: the plan was later added in commit `de67f59`.)* | Add this revised file to `astro-MASTER-flyio` only when explicitly requested. |
 | New backend and hosting | The inspected tree did not show a custom SQLite lead backend, owner dashboard, planned Fly.io configuration, or Docker setup. | Treat these as unimplemented until inspected and tested. |
 
 **Important distinction:** The project has user-facing form **markup and client-side handling**. This does **not** demonstrate that a request is saved to SQLite or that a live notification works. The previous file inspection found no evidence of those features. No application commands were executed for this assessment.
@@ -91,7 +90,7 @@ Extend the **existing Astro HVAC website in `astro-MASTER-flyio`** into a workin
 
 ### 2.3 Important inspection limits
 
-**Working-repository rule:** Any branch, worktree, local clone, pull request, or deployment made under this roadmap must trace back to `astro-MASTER-flyio`. The older Techlo duplicate is not a place to implement or merge these changes.
+**Working-repository rule:** Any branch, worktree, local clone, pull request, or deployment made under this roadmap must trace back to `astro-MASTER-flyio`.
 
 **Not verified as of 2026-10-13 (the local install/build, route URLs and basic rendered/mobile checks were verified on 2026-10-14; see Section 10.1):** a successful local install/build, all real route URLs, exact rendered appearance, mobile layout, production domain, whether any existing form endpoint currently receives leads, production performance, storage needs, private owner identity, authentication provider, or live integrations. Phase 0 resolves what can be checked safely before code changes.
 
@@ -244,7 +243,7 @@ The mapping must explicitly cover:
 
 ### Phase 0. Repository inspection and baseline (current)
 
-**Repository guardrail:** All hands-on work uses `jonexe2/astro-MASTER-flyio`. Treat `jonexe2/techlo-astro-MASTER-Dupe-2` as a protected reference.
+**Repository guardrail:** All hands-on work uses `jonexe2/astro-MASTER-flyio`.
 
 **Why first:** Avoid designing around assumptions and establish the real site's starting condition before changing it.  
 **Depends on:** GitHub access, local development environment for runtime testing.  
@@ -255,7 +254,6 @@ The mapping must explicitly cover:
 **Files:** `CLAUDE.md`, `AGENTS.md`, `SKILLS.md`, `package.json`, `astro.config.mjs`, `.gitignore`.
 
 - [x] Confirm the **new working repository** `jonexe2/astro-MASTER-flyio`, its `main` branch and source tree through GitHub.
-- [x] Record that `jonexe2/techlo-astro-MASTER-Dupe-2` is the original reference and must remain untouched.
 - [x] Read the existing project instructions and identify styling, component and verification rules.
 - [x] Inspect package dependencies, scripts, configuration and existing asset/content conventions.
 - [x] Check whether a root `IMPLEMENTATION_PLAN.md` already exists on the inspected branch; none was found.
@@ -282,7 +280,7 @@ The mapping must explicitly cover:
 **Prerequisites:** P0.1; correct local access.  
 **Files:** `package-lock.json`, `package.json`, project scripts and existing page files.
 
-- [x] Open a local clone of **`jonexe2/astro-MASTER-flyio`** at a known commit/branch; verify the Git remote points to that repository, **not** `techlo-astro-MASTER-Dupe-2`. *(`origin` = `https://github.com/jonexe2/astro-MASTER-flyio.git`; branch `main`; commit `3cc073c`; working tree clean.)*
+- [x] Open a local clone of **`jonexe2/astro-MASTER-flyio`** at a known commit/branch; verify the Git remote points to that repository. *(`origin` = `https://github.com/jonexe2/astro-MASTER-flyio.git`; branch `main`; commit `3cc073c`; working tree clean.)*
 - [x] Install dependencies using the project's lockfile and the supported Node version; record any install failures. *(`npm ci` succeeded: 505 packages in ~1 min, exit 0; Node v24.17.0, npm 11.13.0; project requires Node `>=22.12.0`. No install failures. `npm ci` reported 19 vulnerabilities; see Section 10.1.)*
 - [x] Start the existing development site and visit homepage, contact page, six service pages, blog, and a nonexisting route. *(Dev server at `http://localhost:4321`. 16 real routes returned HTTP 200: `/`, `/contact-us/`, `/about-us/`, `/services/`, `/services/alternative-services/`, `/services/hero-alternatives/`, `/services/service-02/` to `service-06/`, `/services/service-custom-slug/` (the six HVAC service pages are `service-02`, `-03`, `-04`, `-05`, `-06` and `-custom-slug`), `/blog/`, `/blog/post-1/`, `/privacy-policy/`, `/terms-conditions/`. `/does-not-exist/` returned a real HTTP 404 with the custom "Page Not Found" page.)*
 - [x] Check forms visually and safely inspect their current configured submission destination; do **not** submit real customer data to the template address. *(No form was submitted or interacted with. Hero form seen rendered on desktop, tablet and mobile widths. Contact form on `/contact-us/` viewed in the dev browser on 2026-10-14 (about 1024 px wide pane) after a restart of the dev server: heading "Fill The Contact Form"; fields Your name\*, Email address\*, Estimated budget, a date field (mm/dd/yyyy), a required service dropdown ("Select a service \*"), "New project"/"Improve existing system" radios, Email/Phone checkboxes, Write your message\*, consent checkbox, "Send Message" button; all rendered without visible layout problems. Observation, not investigated: the service dropdown label displayed in red before any interaction. The dropdown options and labels are IT-themed (see Section 10.1). Both forms POST JSON via `formSubmit` in `src/lib/utils/FormHandle.ts` to `https://formsubmit.co/ajax/temp.gats@gmail.com`, from `contactFormAction`/`contactFormProvider` in `src/config/config.toml`.)*
@@ -826,7 +824,7 @@ The mapping must explicitly cover:
 **Objective:** Reuse code without sharing lead records.  
 **Prerequisites:** P10.1; test deployments only.
 
-- [ ] Document one deployment/volume/SQLite database/owner account/Sheet per independent client website, each derived from **`astro-MASTER-flyio`**; never alter the protected original Techlo duplicate.
+- [ ] Document one deployment/volume/SQLite database/owner account/Sheet per independent client website, each derived from **`astro-MASTER-flyio`**.
 - [ ] Create a **test** second client configuration with different logo/contact settings and private credentials.
 - [ ] Submit synthetic lead A and B independently; prove each owner sees only their own records.
 - [ ] Test that client A's Sheet integration and importer cannot affect client B's database or Sheet.
@@ -910,7 +908,7 @@ This is the **recommended learning and delivery sequence**, not a rule that ever
 
 | Feature | Minimum test before marking done |
 |---|---|
-| Existing working site | `astro-MASTER-flyio` builds; homepage, contact, service pages, master trust banner, testimonials and mobile layouts remain usable. Protected original repository remains unchanged. |
+| Existing working site | `astro-MASTER-flyio` builds; homepage, contact, service pages, master trust banner, testimonials and mobile layouts remain usable. |
 | Database | Valid lead saved exactly; invalid/duplicate ID errors handled; fresh schema recreated safely. |
 | Form endpoints | Good submission succeeds; bad/missing/oversized/malicious input rejected server-side; no false success. |
 | Form placements | A valid submission from each approved form (hero, homepage longer form, Contact Us) saves a correct lead to the same SQLite database; no source or tracking field is stored (V1). |
@@ -968,7 +966,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 ### Per-task routine
 
 1. Read this plan and select **one** unchecked task whose prerequisites are met.
-2. Confirm the local Git remote is **`jonexe2/astro-MASTER-flyio`**, never the protected Techlo duplicate. Recheck `CLAUDE.md`, `AGENTS.md`, relevant files, and current Git status. Do not assume this plan alone reflects the latest repo.
+2. Confirm the local Git remote is **`jonexe2/astro-MASTER-flyio`**. Recheck `CLAUDE.md`, `AGENTS.md`, relevant files, and current Git status. Do not assume this plan alone reflects the latest repo.
 3. Briefly explain the task, which existing files need changes, any proposed new paths, and how success will be checked.
 4. Work on a focused Git branch when changing code. A branch is a safe separate line of changes; a commit is a saved checkpoint.
 5. Implement **only the agreed task**. Avoid unrelated refactors or design changes. Preserve master trust labels, existing testimonials and their visual components unless the owner explicitly changes this requirement.
@@ -980,7 +978,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 **A practical Claude Code task prompt** (adapt as needed):
 
-> Confirm you are working in `jonexe2/astro-MASTER-flyio` (not `jonexe2/techlo-astro-MASTER-Dupe-2`). Read `IMPLEMENTATION_PLAN.md`, `CLAUDE.md`, and `AGENTS.md`. Work only on task **[TASK ID]**. First inspect relevant existing code and explain proposed changes in simple language. Preserve the master `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and testimonials. Do not redesign existing sections or touch unrelated files. Verify behavior with actual tests, inspect the Git diff, report what passed and failed, and propose checklist updates. Ask before a major architecture change. Do not begin the next task automatically.
+> Confirm you are working in `jonexe2/astro-MASTER-flyio`. Read `IMPLEMENTATION_PLAN.md`, `CLAUDE.md`, and `AGENTS.md`. Work only on task **[TASK ID]**. First inspect relevant existing code and explain proposed changes in simple language. Preserve the master `5.0 Rating`, `200+ Reviews`, `Licensed & Insured` and testimonials. Do not redesign existing sections or touch unrelated files. Verify behavior with actual tests, inspect the Git diff, report what passed and failed, and propose checklist updates. Ask before a major architecture change. Do not begin the next task automatically.
 
 ### When to use agents/subagents
 
@@ -1052,7 +1050,7 @@ The goal is consistent progress with **small, reviewable changes**, not complex 
 
 | Date | Decision | Basis | Status |
 |---|---|---|---|
-| 2026-10-13 | Develop only in `jonexe2/astro-MASTER-flyio`; leave `jonexe2/techlo-astro-MASTER-Dupe-2` untouched. | Owner confirmed new duplicate repository; new source tree inspected. | **Approved and verified as target** |
+| 2026-10-13 | Develop only in `jonexe2/astro-MASTER-flyio`. | Owner confirmed the working repository; its source tree was inspected. | **Approved and verified as target** |
 | 2026-10-13 | Keep master `5.0 Rating`, `200+ Reviews`, `Licensed & Insured`, and existing testimonials. | Explicit owner preference; exact hero text and testimonial files confirmed in working repo. | **Approved for master**; client-public accuracy remains separate |
 | 2026-10-13 | Preserve Astro and existing visual design as the preferred foundation. | Project requirement; working repository already contains substantial Astro UI. | Project preference; technically recheck in P1 |
 | 2026-10-13 | SQLite + one Fly app/volume are the initial direction, not proved production capacity. | Project requirement; small expected workload; actual measurements pending. | Proposed |
@@ -1421,7 +1419,7 @@ Two unused transitive packages (`inherits`, `queue`) were removed from the lockf
 
 **Pre-existing defects, unchanged and preserved:** see Section 10.4 (the `/services/service-01/` menu 404, IT-themed contact form, other leftover template content, and the contact form `Service` select console message).
 
-**Repository protection reminder:** Never push, merge, deploy, or update this plan in the original `techlo-astro-MASTER-Dupe-2`. Only the working `astro-MASTER-flyio` is in scope.
+**Repository reminder:** Only the working `astro-MASTER-flyio` is in scope.
 
 **Update protocol:** When a milestone is truly verified, mark its individual tasks complete, update the phase row with evidence, put the commit reference here, and change the `Current phase`/`Next recommended task` lines at the top. Leave failures visible until resolved. Do not count a plan checkbox as evidence of working software.
 
@@ -1475,14 +1473,13 @@ Use official documentation matching the actual installed versions before issuing
 - [ ] Docker/Fly.io production-style deployment uses a persistent volume and survives verified restart/deployment operations.
 - [ ] A documented dependency security review exists (`npm audit` run on the release build, each remaining finding recorded as fixed, or accepted with a reason such as build-time-only use); no unresolved critical/high finding affecting server-side or production code, and the Astro/`sharp` findings from Section 10.1 are resolved. Unrelated build-tool warnings need not reach zero.
 - [ ] Security, performance, SEO and business-content checks pass; master demo trust/testimonial content remains intact, **any real-client public claims are backed by real evidence or hidden in that client deployment**, and no secrets are exposed.
-- [ ] The development/operations instructions and template-reuse process are understandable and verified, with `astro-MASTER-flyio` identified as the master and the old Techlo duplicate protected.
+- [ ] The development/operations instructions and template-reuse process are understandable and verified, with `astro-MASTER-flyio` identified as the master.
 
 **When every required box above is checked with evidence, Version 1 is complete.** Until then, continue with the next specific unfinished task rather than restarting the project or expanding its scope.
 
 ### Repository and master-content safeguard (applies to every phase)
 
 - **Only development target:** `jonexe2/astro-MASTER-flyio` on an appropriate working branch. Before editing, committing, pushing, or deploying, verify this is the active repository.
-- **Protected original:** `jonexe2/techlo-astro-MASTER-Dupe-2`. Leave its code, design, branches and settings unchanged.
 - **Keep in master:** the exact `5.0 Rating`, `200+ Reviews`, and `Licensed & Insured` values in the hero, plus the existing testimonial section and sample testimonials. These are intended as **editable demo material in the reusable master**, not as proven facts about future clients.
 - **For real client sites:** maintain the same components but populate them with accurate approved business-specific details and genuine testimonials; if evidence is not available, hide the unsupported claim only in that client version. Never remove the original master capability.
 - **Before marking a design/content task complete:** inspect the Git diff for accidental changes to these elements and verify their visibility in the master.
