@@ -1,7 +1,7 @@
 ---
 import type { z } from "astro/zod";
 import Button from "@/components/Button.astro";
-import config from ".astro/config.generated.json";
+import { HVAC_SERVICES } from "@/lib/leads/contract.ts";
 import type { contactFormSchema, inputFieldSchema } from "@/sections.schema";
 import { useTranslations } from "@/lib/utils/i18nUtils.ts";
 import { markdownify, toLowerCase } from "@/lib/utils/textConverter";
@@ -24,10 +24,6 @@ interface Props {
   hideLabels?: boolean;
   nativeSelect?: boolean;
 }
-
-const {
-  settings: { contactFormAction, contactFormProvider },
-} = config;
 
 const genIdFromLabel = (label: string) =>
   toLowerCase(label).replace(/\s+/g, "-");
@@ -165,40 +161,46 @@ const messageContent = {
 const defaultSuccessMessage =
   messageContent.success || formI18n.submissionFallback;
 const defaultErrorMessage = messageContent.error || formI18n.submissionFallback;
+
+// This form sends leads to POST /api/leads/ (V1 lead contract), which accepts
+// only these fields. Fail the build if the content lists anything else, so
+// nothing a customer types can be silently dropped.
+const LEAD_FIELDS = ["fullName", "phone", "email", "services", "message"];
+const REQUIRED_FIELDS = ["fullName", "phone", "email", "services"];
+const fieldNames = visibleInputs.map(getFieldName);
+const findField = (name: string) =>
+  visibleInputs.find((input) => getFieldName(input) === name);
+if (
+  fieldNames.some((name) => !LEAD_FIELDS.includes(name)) ||
+  new Set(fieldNames).size !== fieldNames.length ||
+  REQUIRED_FIELDS.some((name) => !findField(name)?.required) ||
+  findField("services")?.type !== "services" ||
+  findField("message")?.required
+) {
+  throw new Error(
+    `contact-section.md form inputs must be the V1 lead fields only: fullName, phone, email and services (type "services") required, message optional. Found: ${fieldNames.join(", ")}`,
+  );
+}
+
+const autocomplete: Record<string, string> = {
+  fullName: "name",
+  phone: "tel",
+  email: "email",
+};
+const servicesRequiredMessage =
+  form.messages?.servicesRequired || defaultErrorMessage;
 ---
 
 <form
   id="contact-form"
-  {...{
-    "data-action": contactFormAction,
-    "data-provider": contactFormProvider,
-    "data-message-submitting": formI18n.submitting,
-    "data-message-submission-fallback": formI18n.submissionFallback,
-    "data-message-unknown-provider": formI18n.unknownProvider,
-    "data-netlify": contactFormProvider === "netlify" ? "true" : undefined,
-    action: contactFormProvider === "netlify" ? contactFormAction : undefined,
-  }}
   method="post"
+  data-message-validation={form.messages?.validation || defaultErrorMessage}
+  data-message-rate-limited={form.messages?.rateLimited || defaultErrorMessage}
   class:list={["contact-form", Astro.props.class]}>
-  {
-    form.emailSubject && (
-      <input
-        type="hidden"
-        name={
-          ["formsubmit.co", "formspree"].includes(contactFormProvider)
-            ? "_subject"
-            : "subject"
-        }
-        value={form.emailSubject}
-      />
-    )
-  }
-
-  {
-    contactFormProvider === "formsubmit.co" && (
-      <input type="hidden" name="_template" value="table" />
-    )
-  }
+  <!-- Anti-spam honeypot: never shown, focused or announced; real visitors leave it empty. -->
+  <div class="hidden" aria-hidden="true">
+    <input type="text" name="contact_hp" tabindex="-1" autocomplete="off" />
+  </div>
 
   {
     visibleInputs.map((input) => (
@@ -221,13 +223,94 @@ const defaultErrorMessage = messageContent.error || formI18n.submissionFallback;
           </label>
         )}
 
-        {!input.note && !input.items && input.label && !hideLabels && (
-          <label class="contact-form-field-label" for={getFieldId(input)}>
-            {withRequiredMark(input.label, input.required)}
-          </label>
-        )}
+        {!input.note &&
+          !input.items &&
+          input.type !== "services" &&
+          input.label &&
+          !hideLabels && (
+            <label class="contact-form-field-label" for={getFieldId(input)}>
+              {withRequiredMark(input.label, input.required)}
+            </label>
+          )}
 
-        {input.dropdown ? (
+        {input.type === "services" ? (
+          <div data-services-multiselect>
+            <span
+              id={`${getFieldId(input)}-label`}
+              class:list={[hideLabels ? "sr-only" : "contact-form-field-label block"]}>
+              {withRequiredMark(input.label || formI18n.fallbackLabel, input.required)}
+            </span>
+            <div class="contact-form-control-shell">
+              <button
+                id={`${getFieldId(input)}-trigger`}
+                class="contact-form-select-toggle"
+                type="button"
+                data-services-trigger
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls={`${getFieldId(input)}-panel`}
+                aria-labelledby={`${getFieldId(input)}-label ${getFieldId(input)}-trigger-text`}
+                aria-describedby={`${getFieldId(input)}-error`}>
+                <span
+                  id={`${getFieldId(input)}-trigger-text`}
+                  class="contact-form-select-title"
+                  data-services-trigger-text
+                  data-placeholder={withRequiredMark(
+                    input.placeholder || formI18n.fallbackPlaceholder,
+                    input.required,
+                  )}>
+                  {withRequiredMark(
+                    input.placeholder || formI18n.fallbackPlaceholder,
+                    input.required,
+                  )}
+                </span>
+                <span class="contact-form-select-arrow" aria-hidden="true">
+                  <svg
+                    class="size-4 shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="m7 15 5 5 5-5" />
+                    <path d="m7 9 5-5 5 5" />
+                  </svg>
+                </span>
+              </button>
+              <div
+                id={`${getFieldId(input)}-panel`}
+                class="contact-form-select-dropdown absolute top-full right-0 left-0 p-1"
+                role="group"
+                aria-labelledby={`${getFieldId(input)}-label`}
+                data-services-panel
+                hidden>
+                {HVAC_SERVICES.map((service, index) => (
+                  <label class="contact-form-select-option focus-within:bg-theme-light flex items-center gap-3">
+                    <input
+                      id={`${getFieldId(input)}-option-${index + 1}`}
+                      class="contact-form-choice-input contact-form-choice-input--checkbox"
+                      type="checkbox"
+                      value={service}
+                      data-service-option
+                    />
+                    <span>{service}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <p
+              id={`${getFieldId(input)}-error`}
+              class="mt-2 hidden text-sm text-red-700"
+              role="alert"
+              data-services-error>
+              {servicesRequiredMessage}
+            </p>
+          </div>
+        ) : input.dropdown ? (
           <div class="contact-form-control-shell contact-form-select-shell">
             <select
               id={getFieldId(input)}
@@ -378,7 +461,7 @@ const defaultErrorMessage = messageContent.error || formI18n.submissionFallback;
               id={getFieldId(input)}
               type={input.type || "text"}
               name={getFieldName(input)}
-              autocomplete="on"
+              autocomplete={autocomplete[getFieldName(input)] || "on"}
               placeholder={withRequiredMark(
                 input.placeholder || formI18n.fallbackPlaceholder,
                 input.required,
@@ -454,14 +537,15 @@ const defaultErrorMessage = messageContent.error || formI18n.submissionFallback;
 </form>
 
 <script>
+  import { formReset, isFormFilled, setMessage } from "@/lib/utils/FormHandle";
   import {
-    formspreeSubmit,
-    netlifySubmit,
-    formSubmit,
-    isFormFilled,
-    setMessage,
-    validateSelectTag,
-  } from "@/lib/utils/FormHandle";
+    createSubmissionKeys,
+    leadRequestBody,
+    postLead,
+    type LeadOutcome,
+    type LeadPayload,
+  } from "@/lib/utils/leadSubmit";
+  import { initServiceMultiSelect } from "@/lib/utils/serviceMultiSelect";
 
   const initContactForm = () => {
     const form = document.getElementById(
@@ -471,10 +555,6 @@ const defaultErrorMessage = messageContent.error || formI18n.submissionFallback;
     if (!form || form.dataset.contactFormReady) return;
 
     form.dataset.contactFormReady = "true";
-
-    let selectTags = form.querySelectorAll(
-      "[input-wrapper]:not(.hidden) select[data-hs-select]",
-    ) as NodeListOf<HTMLSelectElement>;
 
     const getFieldWrapper = (
       target: string | Element | null | undefined,
@@ -511,152 +591,212 @@ const defaultErrorMessage = messageContent.error || formI18n.submissionFallback;
 
       field.classList.add("is-error");
       field.classList.remove("is-filled");
+      field
+        .querySelector("input[name], textarea[name]")
+        ?.setAttribute("aria-invalid", "true");
     };
 
     const clearFieldError = (target: string | Element | null | undefined) => {
-      getFieldWrapper(target)?.classList.remove("is-error");
+      const field = getFieldWrapper(target);
+      field?.classList.remove("is-error");
+      field
+        ?.querySelector("input[name], textarea[name]")
+        ?.removeAttribute("aria-invalid");
     };
 
     const syncFieldValueState = (
-      element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+      element: HTMLInputElement | HTMLTextAreaElement,
     ) => {
-      if (element instanceof HTMLSelectElement) {
-        markFieldFilled(element, element.value !== "");
-        return;
-      }
-
-      if (element.type === "radio" || element.type === "checkbox") {
-        const checkedItems = form.querySelectorAll(
-          `[name="${element.name}"]:checked`,
-        );
-        markFieldFilled(element.name, checkedItems.length > 0);
-        return;
-      }
-
       markFieldFilled(element, Boolean(element.value.trim()));
     };
 
-    const syncSelectState = (items: HTMLSelectElement[]) => {
-      items.forEach((item) => {
-        const name = item.getAttribute("data-name");
+    const field = (name: string) =>
+      form.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+        `[input-wrapper] [name="${name}"]`,
+      );
+    const fullNameInput = field("fullName");
+    const phoneInput = field("phone");
+    const emailInput = field("email");
+    const messageInput = field("message"); // optional
+    const honeypot = form.querySelector<HTMLInputElement>(
+      'input[name="contact_hp"]',
+    );
+    const servicesRoot = form.querySelector<HTMLElement>(
+      "[data-services-multiselect]",
+    );
+    const servicesWrapper = getFieldWrapper(servicesRoot);
+    const trigger = servicesRoot?.querySelector<HTMLButtonElement>(
+      "[data-services-trigger]",
+    );
 
-        if (name) {
-          item.setAttribute("name", name);
-        }
+    if (
+      !fullNameInput ||
+      !phoneInput ||
+      !emailInput ||
+      !honeypot ||
+      !servicesRoot ||
+      !servicesWrapper ||
+      !trigger
+    ) {
+      return;
+    }
 
-        item.classList.toggle("hs-select-active", item.value !== "");
-        validateSelectTag(item);
-      });
-    };
+    const textControls = [fullNameInput, phoneInput, emailInput, messageInput];
 
-    const inputFields = form.querySelectorAll<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >("input[name], textarea[name], select[name], select[data-hs-select]");
+    // Submission-key rules (LEAD_CONTRACT.md section 5) live in the shared helper.
+    const keys = createSubmissionKeys();
+    let sending = false;
 
-    inputFields.forEach((el) => {
-      const eventName =
-        el instanceof HTMLInputElement &&
-        (el.type === "checkbox" || el.type === "radio")
-          ? "change"
-          : "input";
+    const services = initServiceMultiSelect(servicesRoot, {
+      isLocked: () => sending,
+      onErrorChange: (hasError) =>
+        servicesWrapper.classList.toggle("is-error", hasError),
+      onChange: (selected) =>
+        servicesWrapper.classList.toggle("is-filled", selected.length > 0),
+    });
+    if (!services) return;
 
-      el.addEventListener(eventName, () => {
+    textControls.forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", () => {
         syncFieldValueState(el);
-        clearFieldError(el);
+        if (el.validity.valid) clearFieldError(el);
       });
-
-      if (eventName !== "change") {
-        el.addEventListener("change", () => {
-          syncFieldValueState(el);
-          clearFieldError(el);
-        });
-      }
-
       syncFieldValueState(el);
     });
 
-    syncSelectState(Array.from(selectTags));
+    const validationMessage = form.dataset.messageValidation || "default";
 
-    selectTags.forEach((tag) => {
-      tag.addEventListener("change", () => {
-        syncSelectState(Array.from(selectTags));
-        clearFieldError(tag);
-      });
-    });
-
+    // The browser's own required-field check stops the submit event, so show
+    // the validation message here too (otherwise an older message would stay).
     form.addEventListener(
       "invalid",
       (e) => {
         const target = e.target;
         if (
           target instanceof HTMLInputElement ||
-          target instanceof HTMLTextAreaElement ||
-          target instanceof HTMLSelectElement
+          target instanceof HTMLTextAreaElement
         ) {
           markFieldError(target);
         }
+        services.setError(services.selected().length === 0);
+        setMessage(validationMessage, false, false, form);
       },
       true,
     );
 
-    form.addEventListener("submit", async (e: Event) => {
-      e.preventDefault();
+    form.addEventListener("reset", () => {
+      window.setTimeout(() => {
+        textControls.forEach((el) => {
+          if (!el) return;
+          syncFieldValueState(el);
+          clearFieldError(el);
+        });
+        services.sync();
+        services.setError(false);
+        services.close();
+      }, 0);
+    });
 
-      const provider = form.getAttribute("data-provider") || "";
-      const action = form.getAttribute("data-action") || "";
-      const submittingMessage = form.dataset.messageSubmitting || "";
-      const submissionFallbackMessage =
-        form.dataset.messageSubmissionFallback || "";
-      const unknownProviderMessage = form.dataset.messageUnknownProvider || "";
+    // While a request is pending nothing can be edited, so the answer always
+    // matches what is on screen. Read-only fields look the same in this theme.
+    const setLocked = (locked: boolean) => {
+      sending = locked;
+      textControls.forEach((control) => {
+        if (control) control.readOnly = locked;
+      });
+      for (const element of [form, trigger]) {
+        const attribute = element === form ? "aria-busy" : "aria-disabled";
+        if (locked) element.setAttribute(attribute, "true");
+        else element.removeAttribute(attribute);
+      }
+      if (locked) services.close();
+    };
+
+    const markFieldErrors = (fieldErrors: Record<string, unknown>) => {
+      Object.keys(fieldErrors).forEach((name) => {
+        if (name === "services") services.setError(true);
+        else markFieldError(name);
+      });
+    };
+
+    const showOutcome = (outcome: LeadOutcome) => {
+      if (outcome.kind === "saved") {
+        formReset(form);
+        setMessage("default", true, false, form);
+      } else if (outcome.kind === "invalid") {
+        markFieldErrors(outcome.fieldErrors);
+        setMessage(validationMessage, false, false, form);
+      } else if (outcome.kind === "rate_limited") {
+        setMessage(
+          form.dataset.messageRateLimited || "default",
+          false,
+          false,
+          form,
+        );
+      } else {
+        setMessage("default", false, false, form);
+      }
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (sending) return;
 
       form
         .querySelectorAll<HTMLElement>("[input-wrapper]")
-        .forEach((field) => field.classList.remove("is-error"));
+        .forEach((wrapper) => wrapper.classList.remove("is-error"));
 
-      selectTags = form.querySelectorAll(
-        "[input-wrapper]:not(.hidden) select[data-hs-select]",
-      ) as NodeListOf<HTMLSelectElement>;
+      services.sync();
+      const servicesMissing = services.selected().length === 0;
+      const fieldsValid = form.checkValidity();
+      services.setError(servicesMissing);
 
-      syncSelectState(Array.from(selectTags));
+      if (!fieldsValid || servicesMissing || !isFormFilled(form)) {
+        setMessage(validationMessage, false, false, form);
 
-      if (!form.checkValidity()) {
-        form.reportValidity();
+        if (!fieldsValid) {
+          form.reportValidity();
+        } else if (servicesMissing) {
+          services.focusTrigger();
+        } else {
+          // Everything is filled in, so isFormFilled() rejected the email
+          // format (it also requires a dot after the @). Highlight it so the
+          // "check the highlighted fields" message stays true.
+          markFieldErrors({ email: "invalid" });
+          emailInput.focus();
+        }
+
         return;
       }
 
-      if (isFormFilled(form)) {
-        setMessage(submittingMessage, "pending", true, form);
+      const lead: LeadPayload = {
+        fullName: fullNameInput.value,
+        phone: phoneInput.value,
+        email: emailInput.value,
+        services: services.selected(),
+        ...(messageInput ? { message: messageInput.value } : {}),
+        honeypot: honeypot.value,
+      };
+      const body = leadRequestBody(lead);
+      const submissionKey = keys.keyFor(body);
 
-        try {
-          switch (provider) {
-            case "netlify":
-              await netlifySubmit(form, action);
-              break;
-            case "formsubmit.co":
-              await formSubmit({
-                form,
-                action,
-              });
-              break;
-            case "formspree":
-              await formspreeSubmit(
-                Object.fromEntries(new FormData(form).entries()),
-                5000,
-                form,
-              );
-              break;
-            default:
-              throw new Error(unknownProviderMessage);
-          }
-        } catch (error) {
-          setMessage(
-            error + "! " + submissionFallbackMessage,
-            false,
-            false,
-            form,
-          );
-        }
+      // Never send without duplicate protection.
+      if (!submissionKey) {
+        setMessage("default", false, false, form);
+        return;
       }
+
+      setLocked(true);
+      setMessage("default", "pending", true, form);
+      let outcome: LeadOutcome;
+      try {
+        outcome = await postLead(lead, submissionKey);
+      } finally {
+        setLocked(false);
+      }
+      keys.settle(outcome.kind, body);
+      showOutcome(outcome);
     });
   };
 

@@ -34,7 +34,7 @@ export const newSubmissionKey = (source: CryptoSource | null = globalThis.crypto
   }
 };
 
-export type LeadPayload = Pick<LeadSubmission, "fullName" | "phone" | "email"> & {
+export type LeadPayload = Pick<LeadSubmission, "fullName" | "phone" | "email" | "message"> & {
   services: string[];
   honeypot: string;
 };
@@ -51,15 +51,46 @@ export type LeadOutcome =
   | { kind: "rejected" } // request refused (400/403/413/415...): nothing saved
   | { kind: "uncertain" }; // no trustworthy answer (timeout, network, odd reply): retry with the SAME key
 
-// The exact JSON body: lead fields plus the honeypot, nothing else.
+// The exact JSON body: lead fields plus the honeypot, nothing else. `message`
+// is included only when the form has one (the hero form does not).
 export const leadRequestBody = (lead: LeadPayload) =>
   JSON.stringify({
     fullName: lead.fullName,
     phone: lead.phone,
     email: lead.email,
     services: lead.services,
+    ...(lead.message === undefined ? {} : { message: lead.message }),
     [LEAD_HONEYPOT_FIELD]: lead.honeypot,
   });
+
+// Submission-key rules from LEAD_CONTRACT.md section 5, shared by both forms:
+// identical data keeps its key across retries (an uncertain attempt may already
+// be saved); changed data, a confirmed save or a conflict get a new key.
+export const createSubmissionKeys = (makeKey: () => string | null = newSubmissionKey) => {
+  let key = makeKey();
+  let lastFailedBody: string | null = null;
+  return {
+    // The key to send with `body`, or null when no safe key can be made
+    // (then the form must not send).
+    keyFor(body: string): string | null {
+      if (lastFailedBody !== null && lastFailedBody !== body) {
+        key = makeKey();
+        lastFailedBody = null;
+      }
+      key ??= makeKey();
+      return key;
+    },
+    // Records the outcome of the attempt that sent `body`.
+    settle(kind: LeadOutcome["kind"], body: string) {
+      if (kind === "saved" || kind === "conflict") {
+        key = makeKey();
+        lastFailedBody = null;
+      } else {
+        lastFailedBody = body;
+      }
+    },
+  };
+};
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);

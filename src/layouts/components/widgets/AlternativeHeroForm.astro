@@ -111,6 +111,7 @@ const fieldIds = {
       <div class="relative">
         <button
           id="alternative-hero-services-trigger"
+          data-services-trigger
           class="border-border-light focus:border-primary focus:ring-primary/10 text-dark flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border bg-white px-4 py-3 text-left text-base transition-colors outline-none focus:ring-4"
           type="button"
           aria-haspopup="true"
@@ -120,6 +121,7 @@ const fieldIds = {
           aria-describedby="alternative-hero-services-error">
           <span
             id="alternative-hero-services-trigger-text"
+            data-services-trigger-text
             data-placeholder={form.fields.servicesPlaceholder}>
             {form.fields.servicesPlaceholder}
           </span>
@@ -132,6 +134,7 @@ const fieldIds = {
 
         <div
           id="alternative-hero-services-panel"
+          data-services-panel
           class="border-border-light absolute top-full right-0 left-0 z-30 mt-2 max-h-72 overflow-y-auto rounded-lg border bg-white p-2 shadow-xl shadow-black/15"
           role="group"
           aria-labelledby="alternative-hero-services-label"
@@ -155,6 +158,7 @@ const fieldIds = {
 
       <input
         id={fieldIds.services}
+        data-services-value
         type="hidden"
         name="services"
         value=""
@@ -162,6 +166,7 @@ const fieldIds = {
       />
       <p
         id="alternative-hero-services-error"
+        data-services-error
         class="mt-2 hidden text-sm text-red-700"
         role="alert">
         {form.messages.servicesRequired}
@@ -224,12 +229,13 @@ const fieldIds = {
 <script>
   import { formReset, isFormFilled, setMessage } from "@/lib/utils/FormHandle";
   import {
+    createSubmissionKeys,
     leadRequestBody,
-    newSubmissionKey,
     postLead,
     type LeadOutcome,
     type LeadPayload,
   } from "@/lib/utils/leadSubmit";
+  import { initServiceMultiSelect } from "@/lib/utils/serviceMultiSelect";
 
   const initAlternativeHeroForm = () => {
     const form = document.getElementById(
@@ -246,23 +252,8 @@ const fieldIds = {
     const trigger = form.querySelector<HTMLButtonElement>(
       "#alternative-hero-services-trigger",
     );
-    const triggerText = form.querySelector<HTMLElement>(
-      "#alternative-hero-services-trigger-text",
-    );
-    const panel = form.querySelector<HTMLElement>(
-      "#alternative-hero-services-panel",
-    );
-    const hiddenServices = form.querySelector<HTMLInputElement>(
-      "#alternative-hero-services",
-    );
-    const serviceError = form.querySelector<HTMLElement>(
-      "#alternative-hero-services-error",
-    );
     const validationError = form.querySelector<HTMLElement>(
       "#alternative-hero-validation-error",
-    );
-    const checkboxes = Array.from(
-      form.querySelectorAll<HTMLInputElement>("[data-service-option]"),
     );
     const honeypot = form.querySelector<HTMLInputElement>(
       'input[name="hero_hp"]',
@@ -274,10 +265,6 @@ const fieldIds = {
     if (
       !multiselect ||
       !trigger ||
-      !triggerText ||
-      !panel ||
-      !hiddenServices ||
-      !serviceError ||
       !validationError ||
       !honeypot ||
       textControls.includes(null)
@@ -288,11 +275,16 @@ const fieldIds = {
     const [fullNameInput, phoneInput, emailInput] =
       textControls as HTMLInputElement[];
 
-    // Submission key and retry state (LEAD_CONTRACT.md section 5): the same
-    // data keeps its key across retries; changed data gets a new key.
-    let submissionKey = newSubmissionKey();
-    let lastFailedBody: string | null = null;
+    // Submission-key rules (LEAD_CONTRACT.md section 5) live in the shared helper.
+    const keys = createSubmissionKeys();
     let sending = false;
+
+    const services = initServiceMultiSelect(multiselect, {
+      isLocked: () => sending,
+      onErrorChange: (hasError) =>
+        trigger.classList.toggle("border-red-500", hasError),
+    });
+    if (!services) return;
 
     // While a request is pending nothing can be edited, so the answer always
     // matches what is on screen. No visual change: read-only text inputs look
@@ -307,45 +299,7 @@ const fieldIds = {
         if (locked) element.setAttribute(attribute, "true");
         else element.removeAttribute(attribute);
       }
-      if (locked) setOpen(false);
-    };
-
-    const setOpen = (open: boolean, focusOption = false) => {
-      panel.hidden = !open;
-      trigger.setAttribute("aria-expanded", String(open));
-
-      if (open && focusOption) {
-        checkboxes[0]?.focus();
-      }
-    };
-
-    const getSelectedServices = () =>
-      checkboxes
-        .filter((checkbox) => checkbox.checked)
-        .map(({ value }) => value);
-
-    const setServicesError = (hasError: boolean) => {
-      serviceError.classList.toggle("hidden", !hasError);
-      trigger.setAttribute("aria-invalid", String(hasError));
-      trigger.classList.toggle("border-red-500", hasError);
-    };
-
-    const syncServices = () => {
-      const selected = getSelectedServices();
-      hiddenServices.value = selected.join(", ");
-
-      if (selected.length === 0) {
-        triggerText.textContent =
-          triggerText.dataset.placeholder || "Select one or more services";
-      } else if (selected.length <= 2) {
-        triggerText.textContent = selected.join(", ");
-      } else {
-        triggerText.textContent = `${selected.length} services selected`;
-      }
-
-      if (selected.length > 0) {
-        setServicesError(false);
-      }
+      if (locked) services.close();
     };
 
     const showValidationError = (servicesMissing: boolean) => {
@@ -359,83 +313,6 @@ const fieldIds = {
       control.removeAttribute("aria-invalid");
       control.classList.remove("border-red-500");
     };
-
-    trigger.addEventListener("click", () => {
-      if (sending) return;
-      setOpen(panel.hasAttribute("hidden"));
-    });
-
-    trigger.addEventListener("keydown", (event) => {
-      if (sending && event.key !== "Tab") {
-        event.preventDefault();
-        return;
-      }
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        setOpen(panel.hasAttribute("hidden"));
-      } else if (event.key === "ArrowDown") {
-        event.preventDefault();
-        setOpen(true, true);
-      } else if (event.key === "ArrowUp") {
-        event.preventDefault();
-        setOpen(true);
-        checkboxes.at(-1)?.focus();
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        setOpen(false);
-      }
-    });
-
-    panel.addEventListener("keydown", (event) => {
-      const currentIndex = checkboxes.indexOf(
-        document.activeElement as HTMLInputElement,
-      );
-
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setOpen(false);
-        trigger.focus();
-      } else if (
-        (event.key === "Enter" || event.key === " ") &&
-        currentIndex >= 0
-      ) {
-        event.preventDefault();
-        if (sending) return;
-        const checkbox = checkboxes[currentIndex];
-        checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
-      } else if (event.key === "ArrowDown" && currentIndex >= 0) {
-        event.preventDefault();
-        checkboxes[(currentIndex + 1) % checkboxes.length]?.focus();
-      } else if (event.key === "ArrowUp" && currentIndex >= 0) {
-        event.preventDefault();
-        checkboxes[
-          (currentIndex - 1 + checkboxes.length) % checkboxes.length
-        ]?.focus();
-      }
-    });
-
-    checkboxes.forEach((checkbox) => {
-      checkbox.addEventListener("change", syncServices);
-      // Ignore service changes while a request is pending.
-      checkbox.addEventListener("click", (event) => {
-        if (sending) event.preventDefault();
-      });
-    });
-
-    document.addEventListener("pointerdown", (event) => {
-      if (!multiselect.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    });
-
-    multiselect.addEventListener("focusout", () => {
-      window.setTimeout(() => {
-        if (!multiselect.contains(document.activeElement)) {
-          setOpen(false);
-        }
-      }, 0);
-    });
 
     const requiredControls = Array.from(
       form.querySelectorAll<HTMLInputElement>(
@@ -459,8 +336,7 @@ const fieldIds = {
     form.addEventListener(
       "invalid",
       () => {
-        const servicesMissing = hiddenServices.value === "";
-        setServicesError(servicesMissing);
+        services.setError(services.selected().length === 0);
         showValidationError(false);
       },
       true,
@@ -468,9 +344,9 @@ const fieldIds = {
 
     form.addEventListener("reset", () => {
       window.setTimeout(() => {
-        syncServices();
-        setServicesError(false);
-        setOpen(false);
+        services.sync();
+        services.setError(false);
+        services.close();
         validationError.classList.add("hidden");
         requiredControls.forEach(clearControlError);
       }, 0);
@@ -484,7 +360,7 @@ const fieldIds = {
       };
       Object.keys(fieldErrors).forEach((field) => {
         if (field === "services") {
-          setServicesError(true);
+          services.setError(true);
         } else if (controls[field]) {
           controls[field].setAttribute("aria-invalid", "true");
           controls[field].classList.add("border-red-500");
@@ -492,29 +368,13 @@ const fieldIds = {
       });
     };
 
-    const showOutcome = (outcome: LeadOutcome, body: string) => {
+    const showOutcome = (outcome: LeadOutcome) => {
       const errorMessage = form.dataset.messageError || "default";
 
       if (outcome.kind === "saved") {
-        // A new, separate inquiry from now on.
-        submissionKey = newSubmissionKey();
-        lastFailedBody = null;
         formReset(form);
         setMessage("default", true, false, form);
-        return;
-      }
-
-      if (outcome.kind === "conflict") {
-        // Nothing was saved under this key; the next attempt is a new request.
-        submissionKey = newSubmissionKey();
-        lastFailedBody = null;
-      } else {
-        // Keep the key: an uncertain attempt may already be saved, and
-        // retrying identical data with the same key never creates a duplicate.
-        lastFailedBody = body;
-      }
-
-      if (outcome.kind === "invalid") {
+      } else if (outcome.kind === "invalid") {
         markFieldErrors(outcome.fieldErrors);
         setMessage(
           form.dataset.messageValidation || errorMessage,
@@ -538,12 +398,12 @@ const fieldIds = {
       event.preventDefault();
       if (sending) return;
 
-      syncServices();
+      services.sync();
       validationError.classList.add("hidden");
-      const servicesMissing = hiddenServices.value === "";
+      const servicesMissing = services.selected().length === 0;
       const fieldsValid = form.checkValidity();
 
-      setServicesError(servicesMissing);
+      services.setError(servicesMissing);
 
       if (!fieldsValid || servicesMissing || !isFormFilled(form)) {
         showValidationError(servicesMissing && fieldsValid);
@@ -551,7 +411,7 @@ const fieldIds = {
         if (!fieldsValid) {
           form.reportValidity();
         } else if (servicesMissing) {
-          trigger.focus();
+          services.focusTrigger();
         } else {
           // Everything is filled in, so isFormFilled() rejected the email
           // format (it also requires a dot after the @). Highlight it so the
@@ -567,17 +427,11 @@ const fieldIds = {
         fullName: fullNameInput.value,
         phone: phoneInput.value,
         email: emailInput.value,
-        services: getSelectedServices(),
+        services: services.selected(),
         honeypot: honeypot.value,
       };
       const body = leadRequestBody(lead);
-
-      // Edited after a failed attempt: a different request, so a new key.
-      if (lastFailedBody !== null && lastFailedBody !== body) {
-        submissionKey = newSubmissionKey();
-        lastFailedBody = null;
-      }
-      submissionKey ??= newSubmissionKey();
+      const submissionKey = keys.keyFor(body);
 
       // Never send without duplicate protection.
       if (!submissionKey) {
@@ -593,10 +447,9 @@ const fieldIds = {
       } finally {
         setLocked(false);
       }
-      showOutcome(outcome, body);
+      keys.settle(outcome.kind, body);
+      showOutcome(outcome);
     });
-
-    syncServices();
   };
 
   initAlternativeHeroForm();
