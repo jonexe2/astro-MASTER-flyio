@@ -113,6 +113,7 @@ marquee:
 - Leads are only ever inserted: never `INSERT OR REPLACE` or upsert a lead. Use parameters for every value; never build SQL from submitted text.
 - Save leads only through `saveLead()` in `src/lib/server/db/leads.ts` (validation, duplicate rules and follow-up jobs in one transaction); read them through its `getLeadById`, `listLeads` and `countLeads`.
 - Database tests use temporary files and synthetic records only; never `.env`, `.data/dev.sqlite` or a real database. `npm run db:migrate` creates or updates the local database.
+- Storage locations, backup rules and recovery limits are in `src/lib/server/db/STORAGE.md`. In development a database inside the project must be under `.data/`. Never `await` between `BEGIN` and `COMMIT` on the shared connection.
 
 ## Verification
 
