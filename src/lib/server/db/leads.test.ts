@@ -263,10 +263,44 @@ test("historical or client-specific service labels read back unchanged", (t) => 
   assert.deepEqual(getLeadById(db, id(1))?.services, ["Air Conditioning Repair", "Drain Cleaning"]);
 });
 
-test("a stored row with unreadable services is reported, not shown", (t) => {
+test("valid historical labels at the format limits read back unchanged", (t) => {
   const { db } = setup(t);
-  insertDirect(db, id(1), "2025-01-01T12:00:00.000Z", { services: "[1, 2]" });
-  assert.throws(() => getLeadById(db, id(1)), (e) => e instanceof ServerError && e.code === "DB_INVALID_ROW");
+  const labels = ["x".repeat(100), "\u{1F525}".repeat(100), "Chauffage & Climatisation", "  Spaced label "];
+  insertDirect(db, id(1), "2025-01-01T12:00:00.000Z", { services: JSON.stringify(labels) });
+  assert.deepEqual(getLeadById(db, id(1))?.services, labels);
+});
+
+test("a stored row with a malformed services list is reported, not shown", (t) => {
+  const { db } = setup(t);
+  const char = (code: number) => String.fromCharCode(code);
+  // Non-JSON and non-list text is already refused by the table's CHECK (schema.test.ts);
+  // these are JSON lists the database accepts but the contract does not.
+  const malformed = {
+    "numbers": "[1, 2]",
+    "empty label": JSON.stringify(["AC Repair", ""]),
+    "blank label": JSON.stringify(["   "]),
+    "duplicate labels": JSON.stringify(["AC Repair", "AC Repair"]),
+    "newline": JSON.stringify(["AC\nRepair"]),
+    "carriage return": JSON.stringify(["AC\rRepair"]),
+    "tab": JSON.stringify(["AC\tRepair"]),
+    "NUL": JSON.stringify([`AC${char(0)}Repair`]),
+    "line separator": JSON.stringify([`AC${char(0x2028)}Repair`]),
+    "paragraph separator": JSON.stringify([`AC${char(0x2029)}Repair`]),
+    "101 characters": JSON.stringify(["x".repeat(101)]),
+    "101 emoji (code points)": JSON.stringify(["\u{1F525}".repeat(101)]),
+  };
+  let n = 0;
+  for (const [label, services] of Object.entries(malformed)) {
+    n += 1;
+    insertDirect(db, id(n), "2025-01-01T12:00:00.000Z", { services });
+    assert.throws(
+      () => getLeadById(db, id(n)),
+      (e) => e instanceof ServerError && e.code === "DB_INVALID_ROW",
+      label,
+    );
+  }
+  // The list view refuses to show a page containing such a row, too.
+  assert.throws(() => listLeads(db), (e) => e instanceof ServerError && e.code === "DB_INVALID_ROW");
 });
 
 test("listLeads: newest first, stable order and page by page", (t) => {

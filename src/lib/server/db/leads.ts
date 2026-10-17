@@ -9,7 +9,13 @@ import {
   parseLocalDate,
   todayAndMonthStartUtc,
 } from "../leads/local-time.ts";
-import { UUID_PATTERN, parseSubmissionKey, validateLeadSubmission, type CleanLead } from "../leads/validate.ts";
+import {
+  UUID_PATTERN,
+  isValidStoredServiceList,
+  parseSubmissionKey,
+  validateLeadSubmission,
+  type CleanLead,
+} from "../leads/validate.ts";
 import { isBusyError } from "./migrate.ts";
 
 // Saving and reading leads. Every value goes in as a `?` parameter; SQL text is
@@ -135,8 +141,9 @@ export const saveLead = (
   }
 };
 
-// Stored row -> LeadRecord, values unchanged. Service labels are NOT checked
-// against today's list, so older or client-specific labels read back as stored.
+// Stored row -> LeadRecord, values unchanged. Services must follow the stored
+// format rules (isValidStoredServiceList) but are NOT checked against today's
+// list, so older or client-specific labels read back as stored.
 const toRecord = (row: LeadRow): LeadRecord => {
   let services: unknown;
   try {
@@ -144,7 +151,7 @@ const toRecord = (row: LeadRow): LeadRecord => {
   } catch {
     services = undefined;
   }
-  if (!Array.isArray(services) || services.length === 0 || !services.every((s) => typeof s === "string")) {
+  if (!isValidStoredServiceList(services)) {
     throw new ServerError("DB_INVALID_ROW", "A stored lead has an unreadable services list.");
   }
   return {
@@ -154,7 +161,7 @@ const toRecord = (row: LeadRow): LeadRecord => {
     fullName: row.full_name,
     phone: row.phone,
     email: row.email,
-    services: services as LeadRecord["services"],
+    services,
     message: row.message,
     submissionKey: row.submission_key,
   };

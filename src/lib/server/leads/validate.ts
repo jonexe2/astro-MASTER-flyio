@@ -115,6 +115,23 @@ export const validateLeadSubmission = (input: unknown): ValidationResult => {
   };
 };
 
+// Format-only check for a services list that is already stored or being
+// restored (LEAD_CONTRACT.md section 4): at least one label; each a non-empty,
+// single-line string of at most 100 code points with no control characters; no
+// duplicates. Labels do NOT have to be on today's HVAC_SERVICES list, so older
+// or client-specific labels stay valid.
+export const isValidStoredServiceList = (value: unknown): value is [string, ...string[]] =>
+  Array.isArray(value) &&
+  value.length >= 1 &&
+  value.every(
+    (label) =>
+      typeof label === "string" &&
+      label.trim() !== "" &&
+      !CONTROL.test(label) &&
+      codePoints(label) <= LEAD_LIMITS.storedServiceLabel.max,
+  ) &&
+  new Set(value).size === value.length;
+
 // The submission key comes from a request header: `undefined` or `null` (header
 // absent) means "missing" and the lead is saved without duplicate protection.
 // Any value that IS present must be exactly a lowercase UUID; "" is rejected.

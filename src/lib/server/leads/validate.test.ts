@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseSubmissionKey, validateLeadSubmission } from "./validate.ts";
+import { isValidStoredServiceList, parseSubmissionKey, validateLeadSubmission } from "./validate.ts";
 
 // Synthetic customer details only.
 
@@ -120,6 +120,29 @@ test("input that is not an object is a bad request; unknown fields are ignored",
   const result = validateLeadSubmission({ ...valid, website: "spam", status: "new", source: "x" });
   assert.ok(result.ok);
   assert.deepEqual(Object.keys(result.value).sort(), ["email", "fullName", "message", "phone", "services"]);
+});
+
+test("stored service lists: format rules only, any historical label allowed", () => {
+  const char = (code: number) => String.fromCharCode(code);
+  for (const ok of [["AC Repair"], ["Drain Cleaning", "Air Conditioning Repair"], ["x".repeat(100)]]) {
+    assert.equal(isValidStoredServiceList(ok), true, JSON.stringify(ok));
+  }
+  for (const bad of [
+    undefined,
+    "AC Repair",
+    [],
+    [1],
+    [""],
+    [" "],
+    ["A", "A"],
+    ["A\nB"],
+    ["A\tB"],
+    [`A${char(0x7f)}B`],
+    [`A${char(0x2028)}B`],
+    ["x".repeat(101)],
+  ]) {
+    assert.equal(isValidStoredServiceList(bad), false, JSON.stringify(bad));
+  }
 });
 
 test("submission key: only undefined or null count as missing; anything present must be a lowercase UUID", () => {
