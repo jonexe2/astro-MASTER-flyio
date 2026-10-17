@@ -74,6 +74,7 @@ export const inputFieldSchema = z.object({
       "date",
       "radio",
       "checkbox",
+      "services", // HVAC service multi-select (lead forms; options from HVAC_SERVICES)
     ])
     .optional(),
   id: z.string().optional(),
@@ -130,6 +131,15 @@ export const contactFormSchema = z.object({
   note: z.string().optional(),
   submitButton: sharedButton.optional(),
   inputs: z.array(inputFieldSchema),
+  // Lead form messages; each falls back to the form's error message.
+  messages: z
+    .object({
+      validation: z.string(),
+      servicesRequired: z.string(),
+      rateLimited: z.string(),
+    })
+    .partial()
+    .optional(),
 });
 
 export const servicesSectionSchema = z

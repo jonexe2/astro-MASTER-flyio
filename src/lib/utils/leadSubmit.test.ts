@@ -1,7 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { UUID_PATTERN } from "../server/leads/validate.ts";
-import { leadRequestBody, newSubmissionKey, postLead, type LeadPayload } from "./leadSubmit.ts";
+import {
+  createSubmissionKeys,
+  leadRequestBody,
+  newSubmissionKey,
+  postLead,
+  type LeadOutcome,
+  type LeadPayload,
+} from "./leadSubmit.ts";
 
 // Fake fetch only; no network and no database. Synthetic customer details.
 
@@ -121,4 +128,56 @@ test("a timeout aborts the request and is uncertain; so is a network error", asy
     throw new TypeError("Failed to fetch");
   }) as typeof fetch;
   assert.deepEqual(await postLead(lead, KEY, { fetchImpl: offline }), { kind: "uncertain" });
+});
+
+test("message is sent only when the form has one; the hero body stays five keys", () => {
+  assert.deepEqual(Object.keys(JSON.parse(leadRequestBody(lead))).sort(), [
+    "email",
+    "fullName",
+    "phone",
+    "services",
+    "website_hp",
+  ]);
+  for (const message of ["Furnace is noisy", "", "   "]) {
+    const body = JSON.parse(leadRequestBody({ ...lead, message }));
+    assert.deepEqual(Object.keys(body).sort(), ["email", "fullName", "message", "phone", "services", "website_hp"]);
+    assert.equal(body.message, message); // the server turns blank text into NULL
+  }
+});
+
+test("submission keys: same data keeps its key; changed data, a save or a conflict get a new one", () => {
+  let n = 0;
+  const makeKey = () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`;
+  const keys = createSubmissionKeys(makeKey);
+  const a = leadRequestBody(lead);
+  const b = leadRequestBody({ ...lead, phone: "555-010-0199" });
+
+  const first = keys.keyFor(a);
+  assert.equal(keys.keyFor(a), first, "double submit before any answer");
+  const keeping: LeadOutcome["kind"][] = ["uncertain", "unavailable", "rate_limited", "invalid", "rejected"];
+  for (const kind of keeping) {
+    keys.settle(kind, a);
+    assert.equal(keys.keyFor(a), first, `${kind}: identical retry keeps the key`);
+  }
+
+  keys.settle("uncertain", a);
+  const edited = keys.keyFor(b);
+  assert.notEqual(edited, first, "edit after a failure");
+  assert.equal(keys.keyFor(a), edited, "no failure recorded for the new key yet");
+
+  keys.settle("conflict", a);
+  const afterConflict = keys.keyFor(a);
+  assert.notEqual(afterConflict, edited);
+
+  keys.settle("saved", a);
+  const afterSave = keys.keyFor(a);
+  assert.notEqual(afterSave, afterConflict, "a separate new inquiry, even with identical data");
+});
+
+test("submission keys: no key can be made means null, and a later key is used once available", () => {
+  let available = false;
+  const keys = createSubmissionKeys(() => (available ? KEY : null));
+  assert.equal(keys.keyFor(leadRequestBody(lead)), null);
+  available = true;
+  assert.equal(keys.keyFor(leadRequestBody(lead)), KEY);
 });

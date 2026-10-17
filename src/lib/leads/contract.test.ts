@@ -92,3 +92,21 @@ test("endpoint constants match LEAD_CONTRACT.md and stay apart from lead fields"
   // Room for the largest valid lead: 2,000 four-byte message characters plus the other fields.
   assert.ok(LEAD_MAX_BODY_BYTES >= 2000 * 4 + 1024);
 });
+
+test("the contact form content lists exactly the V1 lead fields (message optional)", () => {
+  const file = new URL("../../content/sections/english/contact-section.md", import.meta.url);
+  const inputs = (matter(readFileSync(file, "utf8")).data.form.inputs as Record<string, unknown>[]).filter(
+    (input) => !input.note,
+  );
+  assert.deepEqual(
+    inputs.map((input) => [input.name, input.required === true]),
+    [
+      ["fullName", true],
+      ["phone", true],
+      ["email", true],
+      ["services", true],
+      ["message", false],
+    ],
+  );
+  assert.equal(inputs.find((input) => input.name === "services")?.type, "services");
+});

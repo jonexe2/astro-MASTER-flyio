@@ -1,7 +1,7 @@
 ---
 enable: true
-title: "Let’s build an awesome project together"
-description: "Share your goals with our team and we will help define the right strategy, scope, and delivery plan for your next technology project."
+title: "Request HVAC Service"
+description: "Tell us about your heating or cooling needs and we'll follow up to schedule service."
 officeHours: "Office Hours: Mon - Sat: 8:00 AM - 10:00 PM"
 
 info:
