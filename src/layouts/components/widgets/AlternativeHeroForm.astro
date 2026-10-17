@@ -552,6 +552,12 @@ const fieldIds = {
           form.reportValidity();
         } else if (servicesMissing) {
           trigger.focus();
+        } else {
+          // Everything is filled in, so isFormFilled() rejected the email
+          // format (it also requires a dot after the @). Highlight it so the
+          // "check the highlighted fields" message stays true.
+          markFieldErrors({ email: "invalid" });
+          emailInput.focus();
         }
 
         return;

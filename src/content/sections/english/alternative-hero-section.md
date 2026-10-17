@@ -73,7 +73,7 @@ form:
       position: "right"
 
   messages:
-    validation: "Please complete all required fields."
+    validation: "Please check the highlighted fields and try again."
     servicesRequired: "Select at least one service."
     pending: "Submitting your service request..."
     success: "Thank you. Your service request has been received."
