@@ -73,9 +73,9 @@ honeypot stays the only hidden field). The header name is chosen in P3.1.
 | Retry after an uncertain failure | Form keeps the data and the key. If the first attempt was saved, the server finds the key, sees identical data and returns the original success and lead ID. Otherwise it saves now. One lead. |
 | Two requests at the same moment | The unique key lets one insert win; the other looks up the key and answers as above. |
 | Customer edits a field after an error | The script makes a new key: it is a different request. |
-| Same key, different data | Nothing saved; error returned; the script makes a new key. |
-| Key missing | Lead saved normally, without duplicate protection. |
-| Key not a valid UUID | Request rejected as invalid. |
+| Same key, different data | Nothing saved; `conflict` returned; the script makes a new key. |
+| Key missing (header absent) | Lead saved normally, without duplicate protection. |
+| Key present but not exactly a lowercase UUID (including an empty value) | Nothing saved; `bad_request` returned. |
 | Later separate inquiry | New key, separate lead, even with the same phone, email or text. |
 
 "Identical" means equal after the cleanup in section 2. Leads are never merged

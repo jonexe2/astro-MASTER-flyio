@@ -70,14 +70,20 @@ export const LEAD_SHEET_V1_COLUMNS = [
   nullable: boolean;
 }[];
 
+// Field error values are constant codes; the forms show their own copy for them.
+export type LeadFieldError = "required" | "too_long" | "invalid";
+
 export type LeadSubmissionResult =
-  | { ok: true; leadId: string } // only after the lead is saved (P2/P3)
-  | { ok: false; reason: "invalid"; fieldErrors: Partial<Record<keyof LeadSubmission, string>> }
-  | { ok: false; reason: "unavailable" };
+  | { ok: true; leadId: string } // only after the database transaction committed
+  | { ok: false; reason: "invalid"; fieldErrors: Partial<Record<keyof LeadSubmission, LeadFieldError>> }
+  | { ok: false; reason: "conflict" } // same submission key, different data; nothing saved
+  | { ok: false; reason: "bad_request" } // present but malformed key, or input not an object
+  | { ok: false; reason: "unavailable" }; // database problem; nothing saved
 
 // The single backend entry point both forms will use (implemented in P3.1 at
-// src/lib/server/leads/handler.ts). Takes untrusted input.
-export type LeadSubmissionHandler = (input: unknown) => Promise<LeadSubmissionResult>;
+// src/lib/server/leads/handler.ts). Takes untrusted input; the submission key
+// arrives separately in a request header (null when the header is absent).
+export type LeadSubmissionHandler = (input: unknown, submissionKey: unknown) => Promise<LeadSubmissionResult>;
 
 export const isHvacService = (value: unknown): value is HvacService =>
   typeof value === "string" && (HVAC_SERVICES as readonly string[]).includes(value);

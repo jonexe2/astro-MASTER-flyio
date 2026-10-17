@@ -111,6 +111,7 @@ marquee:
 - Schema changes are migrations in `src/lib/server/db/migrations/`, listed in order in `index.ts`. They are forward-only: add a new file; never edit, reorder or remove a merged migration (a stored checksum refuses edited ones).
 - The runner applies all pending migrations in one transaction, so migration SQL must not contain `BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`, `VACUUM`, `PRAGMA journal_mode` or `PRAGMA foreign_keys`.
 - Leads are only ever inserted: never `INSERT OR REPLACE` or upsert a lead. Use parameters for every value; never build SQL from submitted text.
+- Save leads only through `saveLead()` in `src/lib/server/db/leads.ts` (validation, duplicate rules and follow-up jobs in one transaction); read them through its `getLeadById`, `listLeads` and `countLeads`.
 - Database tests use temporary files and synthetic records only; never `.env`, `.data/dev.sqlite` or a real database. `npm run db:migrate` creates or updates the local database.
 
 ## Verification
