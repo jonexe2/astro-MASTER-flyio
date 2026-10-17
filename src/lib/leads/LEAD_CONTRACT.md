@@ -65,7 +65,9 @@ dashboard, the Sheet and restores keep it character for character.
 
 The form script creates a random submission key when the form is ready and
 sends it with the request as a header (it is not a hidden form input; the
-honeypot stays the only hidden field). The header name is chosen in P3.1.
+honeypot stays the only hidden field). The header is `Idempotency-Key`
+(chosen in P3.1); the endpoint is `POST /api/leads/` (`LEAD_ENDPOINT` and
+`LEAD_SUBMISSION_KEY_HEADER` in `contract.ts`).
 
 | Situation | Behaviour |
 |---|---|

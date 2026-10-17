@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "dev": "npm run toml:watch && astro dev",
+    "dev": "npm run toml:watch && node --env-file-if-exists=.env node_modules/astro/bin/astro.mjs dev",
     "astro": "astro",
     "toml:watch": "node scripts/toml-watcher.mjs",
     "build": "npm run toml:watch && astro build && npm run remove-draft-from-sitemap",

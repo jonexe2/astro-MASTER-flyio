@@ -4,9 +4,13 @@ import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import {
   HVAC_SERVICES,
+  LEAD_ENDPOINT,
+  LEAD_HONEYPOT_FIELD,
   LEAD_LIMITS,
+  LEAD_MAX_BODY_BYTES,
   LEAD_SHEET_FORMAT,
   LEAD_SHEET_V1_COLUMNS,
+  LEAD_SUBMISSION_KEY_HEADER,
   isHvacService,
 } from "./contract.ts";
 
@@ -75,4 +79,16 @@ test("Sheet lead.v1 maps every LeadRecord field exactly once", () => {
     LEAD_SHEET_V1_COLUMNS.filter((c) => c.nullable).map((c) => c.field),
     ["message", "submissionKey"],
   );
+});
+
+test("endpoint constants match LEAD_CONTRACT.md and stay apart from lead fields", () => {
+  const doc = readFileSync(new URL("./LEAD_CONTRACT.md", import.meta.url), "utf8");
+  assert.equal(LEAD_ENDPOINT, "/api/leads/");
+  assert.equal(LEAD_SUBMISSION_KEY_HEADER, "Idempotency-Key");
+  assert.ok(doc.includes("`Idempotency-Key`") && doc.includes("`POST /api/leads/`"));
+  // The honeypot is never a lead field and never a Sheet column.
+  assert.ok(!["fullName", "phone", "email", "services", "message"].includes(LEAD_HONEYPOT_FIELD));
+  assert.ok(!LEAD_SHEET_V1_COLUMNS.some((c) => (c.header as string) === LEAD_HONEYPOT_FIELD));
+  // Room for the largest valid lead: 2,000 four-byte message characters plus the other fields.
+  assert.ok(LEAD_MAX_BODY_BYTES >= 2000 * 4 + 1024);
 });

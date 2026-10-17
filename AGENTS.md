@@ -102,7 +102,8 @@ marquee:
 - The guard only throws if server code runs in a browser; it does not stop code or secrets from being shipped in downloaded JavaScript. The import rule below, `boundaries.test.ts` and the build-output scan do that. Never put secrets in code the browser can load.
 - Only `src/pages/` (endpoints, on-demand pages) and `src/lib/server/` may import it; never from components, widgets, `<script>` blocks or `src/lib/utils/`. `src/lib/server/boundaries.test.ts` enforces this.
 - Code shared with the browser (for example the lead contract in `src/lib/leads/contract.ts`) must contain no secrets or Node APIs and must not import from `src/lib/server/`.
-- Both lead forms use one backend handler (planned: `src/lib/server/leads/handler.ts`). Do not write per-form storage logic.
+- Both lead forms post to `POST /api/leads/` (`src/pages/api/leads.ts`), which only calls the shared handler `src/lib/server/leads/handler.ts`. Use the `LEAD_*` constants in `src/lib/leads/contract.ts` for the URL, `Idempotency-Key` header and honeypot field. Do not write per-form storage logic, and never read forwarded headers (`X-Forwarded-For`, `Fly-Client-IP`, ...) outside the one trusted source chosen in P8.
+- `npm run dev` loads `.env` through Node's `--env-file-if-exists`; Astro does not put `.env` into `process.env` on its own.
 - Tests sit next to the code as `*.test.ts` and run with `npm test` (Node's built-in test runner; no test dependency). Keep them out of `src/pages/`.
 
 ## Database (SQLite)

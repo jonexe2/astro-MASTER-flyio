@@ -80,10 +80,27 @@ export type LeadSubmissionResult =
   | { ok: false; reason: "bad_request" } // present but malformed key, or input not an object
   | { ok: false; reason: "unavailable" }; // database problem; nothing saved
 
-// The single backend entry point both forms will use (implemented in P3.1 at
-// src/lib/server/leads/handler.ts). Takes untrusted input; the submission key
-// arrives separately in a request header (null when the header is absent).
+// The single backend entry point both forms use (src/lib/server/leads/handler.ts).
+// Takes untrusted input; the submission key arrives separately in a request
+// header (null when the header is absent).
 export type LeadSubmissionHandler = (input: unknown, submissionKey: unknown) => Promise<LeadSubmissionResult>;
+
+// HTTP endpoint both forms call (P3.1): POST JSON with exactly the
+// LeadSubmission fields plus the honeypot, and the submission key in a header.
+export const LEAD_ENDPOINT = "/api/leads/";
+export const LEAD_SUBMISSION_KEY_HEADER = "Idempotency-Key";
+// Hidden anti-spam field: must be absent or "". Never stored.
+export const LEAD_HONEYPOT_FIELD = "website_hp";
+// Request body limit in bytes (the largest valid lead is under 9 KB).
+export const LEAD_MAX_BODY_BYTES = 16 * 1024;
+
+// JSON body of every endpoint response. Success means the lead is in SQLite.
+export type LeadEndpointResponse =
+  | LeadSubmissionResult
+  | {
+      ok: false;
+      reason: "unsupported_media_type" | "too_large" | "forbidden" | "rate_limited" | "method_not_allowed";
+    };
 
 export const isHvacService = (value: unknown): value is HvacService =>
   typeof value === "string" && (HVAC_SERVICES as readonly string[]).includes(value);
