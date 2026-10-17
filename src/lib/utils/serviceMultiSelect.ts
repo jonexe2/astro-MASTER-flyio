@@ -95,6 +95,8 @@ export const initServiceMultiSelect = (
       setOpen(false);
       trigger.focus();
     } else if ((event.key === "Enter" || event.key === " ") && currentIndex >= 0) {
+      // Required: without it the browser's own Space action toggles the box
+      // back on keyup (covered by serviceMultiSelect.test.ts).
       event.preventDefault();
       if (isLocked()) return;
       const checkbox = checkboxes[currentIndex];
