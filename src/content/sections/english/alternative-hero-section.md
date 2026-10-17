@@ -78,5 +78,6 @@ form:
     pending: "Submitting your service request..."
     success: "Thank you. Your service request has been received."
     error: "We couldn't submit your request. Please try again."
+    rateLimited: "Too many requests. Please wait a few minutes and try again."
     unknownProvider: "The configured form provider is not available."
 ---
