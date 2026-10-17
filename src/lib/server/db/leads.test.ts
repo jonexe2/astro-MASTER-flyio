@@ -92,6 +92,44 @@ test("a hero-style lead without message or key stores NULLs", (t) => {
   assert.equal(count(db, "leads"), 2);
 });
 
+test("a saved lead and its jobs survive closing and reopening the database", (t) => {
+  const { db, path } = setup(t);
+  const now = new Date("2026-10-16T14:03:22.123Z");
+  const id = leadIdOf(saveLead(db, input(), KEY, { now: () => now }));
+  const before = getLeadById(db, id);
+  db.close();
+
+  // Closed in `finally`: setup's cleanup removes the folder first, and Windows
+  // cannot delete an open database file.
+  const reopened = openDatabase(path, "development");
+  try {
+    assert.deepEqual(getLeadById(reopened, id), before);
+    assert.deepEqual(before, {
+      id,
+      createdAt: "2026-10-16T14:03:22.123Z",
+      updatedAt: "2026-10-16T14:03:22.123Z",
+      fullName: "Test Person",
+      phone: "+1 (555) 010-0100",
+      email: "test@example.com",
+      services: ["AC Repair", "Heating Repair"],
+      message: null,
+      submissionKey: KEY,
+    });
+    assert.deepEqual(
+      reopened.prepare("SELECT kind, status FROM integration_jobs WHERE lead_id = ? ORDER BY kind").all(id).map((j) => ({ ...j })),
+      [
+        { kind: "email_new_lead", status: "pending" },
+        { kind: "sheet_sync", status: "pending" },
+      ],
+    );
+    assert.deepEqual(reopened.prepare("SELECT version FROM schema_migrations").all().map((r) => r.version), [1]);
+    // The reopened database still treats the same request as a repeat.
+    assert.deepEqual(saveLead(reopened, input(), KEY), { ok: true, leadId: id });
+  } finally {
+    reopened.close();
+  }
+});
+
 test("invalid input saves nothing", (t) => {
   const { db } = setup(t);
   const result = saveLead(db, input({ email: "not-an-email", services: [] }), KEY);

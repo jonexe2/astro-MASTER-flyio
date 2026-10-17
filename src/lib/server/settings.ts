@@ -1,5 +1,5 @@
 import "./server-only.ts";
-import { posix, resolve } from "node:path";
+import { isAbsolute, join, posix, relative, resolve, sep } from "node:path";
 import { ServerError } from "./errors.ts";
 
 // Private settings come from environment variables (see .env.example), never from
@@ -11,7 +11,8 @@ export type AppEnv = "development" | "production";
 
 // Planned Fly.io volume mount (finalized in P8). Only production may use it.
 export const PRODUCTION_DATA_DIR = "/data";
-export const DEV_DEFAULT_DATABASE_PATH = ".data/dev.sqlite";
+export const DEV_DATA_DIR = ".data";
+export const DEV_DEFAULT_DATABASE_PATH = `${DEV_DATA_DIR}/dev.sqlite`;
 
 type Env = Record<string, string | undefined>;
 
@@ -32,6 +33,14 @@ const inProductionDataDir = (path: string) => {
   return p === PRODUCTION_DATA_DIR || p.startsWith(`${PRODUCTION_DATA_DIR}/`);
 };
 
+// Is the absolute `path` inside the absolute `folder` (or the folder itself)?
+// Windows paths are compared without case, as its file system does.
+const isWithin = (folder: string, path: string) => {
+  const fold = (p: string) => (process.platform === "win32" ? p.toLowerCase() : p);
+  const rel = relative(fold(folder), fold(path));
+  return rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
+};
+
 // Production check: an absolute POSIX path that stays inside /data/ after lexical
 // normalization. Rejects backslashes, drive letters, NUL and any ".." escape.
 // Limit: this is lexical only. A symbolic link inside /data that points elsewhere
@@ -44,7 +53,9 @@ const productionPath = (configured: string): string | undefined => {
 
 // The only way server code should obtain the SQLite file location (used from P2.2).
 // Keeps development and production databases apart:
-// - development may not point into the production data directory;
+// - development may not point into the production data directory, and inside the
+//   project only .data/ is allowed (public/ is served, dist/ is replaced on each
+//   build, src/ sits next to committed code);
 // - production must name an absolute path inside it and has no default.
 export const resolveDatabasePath = (env: Env, cwd: string = process.cwd()) => {
   const appEnv = readAppEnv(env);
@@ -74,8 +85,15 @@ export const resolveDatabasePath = (env: Env, cwd: string = process.cwd()) => {
       `In development, DATABASE_PATH must not point into ${PRODUCTION_DATA_DIR}/ (the production data directory).`,
     );
   }
+  const path = resolve(cwd, raw);
+  if (isWithin(cwd, path) && !isWithin(join(cwd, DEV_DATA_DIR), path)) {
+    throw new ServerError(
+      "SETTINGS_DATABASE_PATH",
+      `In development, a DATABASE_PATH inside the project must be inside ${DEV_DATA_DIR}/ (never public/, dist/ or src/).`,
+    );
+  }
   if (!raw.endsWith(".sqlite")) {
     throw new ServerError("SETTINGS_DATABASE_PATH", "DATABASE_PATH must end with .sqlite.");
   }
-  return { appEnv, path: resolve(cwd, raw) };
+  return { appEnv, path };
 };
