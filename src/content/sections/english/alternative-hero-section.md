@@ -73,10 +73,11 @@ form:
       position: "right"
 
   messages:
-    validation: "Please complete all required fields."
+    validation: "Please check the highlighted fields and try again."
     servicesRequired: "Select at least one service."
     pending: "Submitting your service request..."
     success: "Thank you. Your service request has been received."
     error: "We couldn't submit your request. Please try again."
+    rateLimited: "Too many requests. Please wait a few minutes and try again."
     unknownProvider: "The configured form provider is not available."
 ---

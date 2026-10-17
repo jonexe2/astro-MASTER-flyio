@@ -1,6 +1,5 @@
 ---
 import type { z } from "astro/zod";
-import config from ".astro/config.generated.json";
 import Button from "@/components/Button.astro";
 import DynamicIcon from "@/helpers/DynamicIcon.astro";
 import type { alternativeHeroFormSchema } from "@/sections.schema";
@@ -12,9 +11,6 @@ type Props = {
 };
 
 const { form } = Astro.props;
-const {
-  settings: { contactFormAction, contactFormProvider },
-} = config;
 
 const fieldIds = {
   fullName: "alternative-hero-full-name",
@@ -38,33 +34,13 @@ const fieldIds = {
     id="alternative-hero-form"
     class="mt-8 scroll-mt-32"
     method="post"
-    {...{
-      "data-action": contactFormAction,
-      "data-provider": contactFormProvider,
-      "data-message-error": form.messages.error,
-      "data-message-unknown-provider": form.messages.unknownProvider,
-      "data-netlify": contactFormProvider === "netlify" ? "true" : undefined,
-      action: contactFormProvider === "netlify" ? contactFormAction : undefined,
-    }}>
-    {
-      form.emailSubject && (
-        <input
-          type="hidden"
-          name={
-            ["formsubmit.co", "formspree"].includes(contactFormProvider)
-              ? "_subject"
-              : "subject"
-          }
-          value={form.emailSubject}
-        />
-      )
-    }
-
-    {
-      contactFormProvider === "formsubmit.co" && (
-        <input type="hidden" name="_template" value="table" />
-      )
-    }
+    data-message-error={form.messages.error}
+    data-message-validation={form.messages.validation}
+    data-message-rate-limited={form.messages.rateLimited ?? form.messages.error}>
+    <!-- Anti-spam honeypot: never shown, focused or announced; real visitors leave it empty. -->
+    <div class="hidden" aria-hidden="true">
+      <input type="text" name="hero_hp" tabindex="-1" autocomplete="off" />
+    </div>
 
     <p
       id="alternative-hero-validation-error"
@@ -246,13 +222,14 @@ const fieldIds = {
 </div>
 
 <script>
+  import { formReset, isFormFilled, setMessage } from "@/lib/utils/FormHandle";
   import {
-    formspreeSubmit,
-    netlifySubmit,
-    formSubmit,
-    isFormFilled,
-    setMessage,
-  } from "@/lib/utils/FormHandle";
+    leadRequestBody,
+    newSubmissionKey,
+    postLead,
+    type LeadOutcome,
+    type LeadPayload,
+  } from "@/lib/utils/leadSubmit";
 
   const initAlternativeHeroForm = () => {
     const form = document.getElementById(
@@ -287,6 +264,12 @@ const fieldIds = {
     const checkboxes = Array.from(
       form.querySelectorAll<HTMLInputElement>("[data-service-option]"),
     );
+    const honeypot = form.querySelector<HTMLInputElement>(
+      'input[name="hero_hp"]',
+    );
+    const textControls = ["fullName", "phone", "email"].map((name) =>
+      form.querySelector<HTMLInputElement>(`input[name="${name}"]`),
+    );
 
     if (
       !multiselect ||
@@ -295,10 +278,37 @@ const fieldIds = {
       !panel ||
       !hiddenServices ||
       !serviceError ||
-      !validationError
+      !validationError ||
+      !honeypot ||
+      textControls.includes(null)
     ) {
       return;
     }
+
+    const [fullNameInput, phoneInput, emailInput] =
+      textControls as HTMLInputElement[];
+
+    // Submission key and retry state (LEAD_CONTRACT.md section 5): the same
+    // data keeps its key across retries; changed data gets a new key.
+    let submissionKey = newSubmissionKey();
+    let lastFailedBody: string | null = null;
+    let sending = false;
+
+    // While a request is pending nothing can be edited, so the answer always
+    // matches what is on screen. No visual change: read-only text inputs look
+    // the same in this theme, and the services panel simply stays closed.
+    const setLocked = (locked: boolean) => {
+      sending = locked;
+      textControls.forEach((control) => {
+        if (control) control.readOnly = locked;
+      });
+      for (const element of [form, trigger]) {
+        const attribute = element === form ? "aria-busy" : "aria-disabled";
+        if (locked) element.setAttribute(attribute, "true");
+        else element.removeAttribute(attribute);
+      }
+      if (locked) setOpen(false);
+    };
 
     const setOpen = (open: boolean, focusOption = false) => {
       panel.hidden = !open;
@@ -351,10 +361,15 @@ const fieldIds = {
     };
 
     trigger.addEventListener("click", () => {
+      if (sending) return;
       setOpen(panel.hasAttribute("hidden"));
     });
 
     trigger.addEventListener("keydown", (event) => {
+      if (sending && event.key !== "Tab") {
+        event.preventDefault();
+        return;
+      }
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         setOpen(panel.hasAttribute("hidden"));
@@ -385,6 +400,7 @@ const fieldIds = {
         currentIndex >= 0
       ) {
         event.preventDefault();
+        if (sending) return;
         const checkbox = checkboxes[currentIndex];
         checkbox.checked = !checkbox.checked;
         checkbox.dispatchEvent(new Event("change", { bubbles: true }));
@@ -401,6 +417,10 @@ const fieldIds = {
 
     checkboxes.forEach((checkbox) => {
       checkbox.addEventListener("change", syncServices);
+      // Ignore service changes while a request is pending.
+      checkbox.addEventListener("click", (event) => {
+        if (sending) event.preventDefault();
+      });
     });
 
     document.addEventListener("pointerdown", (event) => {
@@ -456,8 +476,67 @@ const fieldIds = {
       }, 0);
     });
 
+    const markFieldErrors = (fieldErrors: Record<string, unknown>) => {
+      const controls: Record<string, HTMLInputElement> = {
+        fullName: fullNameInput,
+        phone: phoneInput,
+        email: emailInput,
+      };
+      Object.keys(fieldErrors).forEach((field) => {
+        if (field === "services") {
+          setServicesError(true);
+        } else if (controls[field]) {
+          controls[field].setAttribute("aria-invalid", "true");
+          controls[field].classList.add("border-red-500");
+        }
+      });
+    };
+
+    const showOutcome = (outcome: LeadOutcome, body: string) => {
+      const errorMessage = form.dataset.messageError || "default";
+
+      if (outcome.kind === "saved") {
+        // A new, separate inquiry from now on.
+        submissionKey = newSubmissionKey();
+        lastFailedBody = null;
+        formReset(form);
+        setMessage("default", true, false, form);
+        return;
+      }
+
+      if (outcome.kind === "conflict") {
+        // Nothing was saved under this key; the next attempt is a new request.
+        submissionKey = newSubmissionKey();
+        lastFailedBody = null;
+      } else {
+        // Keep the key: an uncertain attempt may already be saved, and
+        // retrying identical data with the same key never creates a duplicate.
+        lastFailedBody = body;
+      }
+
+      if (outcome.kind === "invalid") {
+        markFieldErrors(outcome.fieldErrors);
+        setMessage(
+          form.dataset.messageValidation || errorMessage,
+          false,
+          false,
+          form,
+        );
+      } else if (outcome.kind === "rate_limited") {
+        setMessage(
+          form.dataset.messageRateLimited || errorMessage,
+          false,
+          false,
+          form,
+        );
+      } else {
+        setMessage("default", false, false, form);
+      }
+    };
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (sending) return;
 
       syncServices();
       validationError.classList.add("hidden");
@@ -473,45 +552,48 @@ const fieldIds = {
           form.reportValidity();
         } else if (servicesMissing) {
           trigger.focus();
+        } else {
+          // Everything is filled in, so isFormFilled() rejected the email
+          // format (it also requires a dot after the @). Highlight it so the
+          // "check the highlighted fields" message stays true.
+          markFieldErrors({ email: "invalid" });
+          emailInput.focus();
         }
 
         return;
       }
 
-      const provider = form.dataset.provider || "";
-      const action = form.dataset.action || "";
-      const fallbackMessage = form.dataset.messageError || "";
-      const unknownProviderMessage =
-        form.dataset.messageUnknownProvider || fallbackMessage;
+      const lead: LeadPayload = {
+        fullName: fullNameInput.value,
+        phone: phoneInput.value,
+        email: emailInput.value,
+        services: getSelectedServices(),
+        honeypot: honeypot.value,
+      };
+      const body = leadRequestBody(lead);
 
-      setMessage("default", "pending", true, form);
-
-      try {
-        switch (provider) {
-          case "netlify":
-            await netlifySubmit(form, action);
-            break;
-          case "formsubmit.co":
-            await formSubmit({ form, action });
-            break;
-          case "formspree":
-            await formspreeSubmit(
-              Object.fromEntries(new FormData(form).entries()),
-              5000,
-              form,
-            );
-            break;
-          default:
-            throw new Error(unknownProviderMessage);
-        }
-      } catch (error) {
-        setMessage(
-          error instanceof Error ? error.message : fallbackMessage,
-          false,
-          false,
-          form,
-        );
+      // Edited after a failed attempt: a different request, so a new key.
+      if (lastFailedBody !== null && lastFailedBody !== body) {
+        submissionKey = newSubmissionKey();
+        lastFailedBody = null;
       }
+      submissionKey ??= newSubmissionKey();
+
+      // Never send without duplicate protection.
+      if (!submissionKey) {
+        setMessage("default", false, false, form);
+        return;
+      }
+
+      setLocked(true);
+      setMessage("default", "pending", true, form);
+      let outcome: LeadOutcome;
+      try {
+        outcome = await postLead(lead, submissionKey);
+      } finally {
+        setLocked(false);
+      }
+      showOutcome(outcome, body);
     });
 
     syncServices();

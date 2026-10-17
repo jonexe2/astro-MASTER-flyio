@@ -520,6 +520,7 @@ export const alternativeHeroFormSchema = z.object({
     pending: z.string(),
     success: z.string(),
     error: z.string(),
+    rateLimited: z.string().optional(), // falls back to `error`
     unknownProvider: z.string(),
   }),
 });
